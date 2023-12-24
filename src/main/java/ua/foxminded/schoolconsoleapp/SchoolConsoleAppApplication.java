@@ -15,7 +15,6 @@ public class SchoolConsoleAppApplication {
 
     SchoolFrontController frontController = context.getBean(SchoolFrontController.class);
 
-    frontController.initialize();
     frontController.run();
   }
 

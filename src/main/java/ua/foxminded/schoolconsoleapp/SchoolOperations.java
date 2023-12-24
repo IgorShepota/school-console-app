@@ -5,12 +5,12 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.foxminded.schoolconsoleapp.consolemanager.ConsoleManager;
-import ua.foxminded.schoolconsoleapp.dao.CourseDao;
-import ua.foxminded.schoolconsoleapp.dao.GroupDao;
-import ua.foxminded.schoolconsoleapp.dao.StudentDao;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
+import ua.foxminded.schoolconsoleapp.service.dao.CourseService;
+import ua.foxminded.schoolconsoleapp.service.dao.GroupService;
+import ua.foxminded.schoolconsoleapp.service.dao.StudentService;
 import ua.foxminded.schoolconsoleapp.validator.Validator;
 import ua.foxminded.schoolconsoleapp.validator.exception.ValidationException;
 
@@ -19,18 +19,18 @@ public class SchoolOperations {
 
   private final ConsoleManager consoleManager;
   private final Validator validator;
-  private final StudentDao studentDao;
-  private final GroupDao groupDao;
-  private final CourseDao courseDao;
+  private final StudentService studentService;
+  private final GroupService groupService;
+  private final CourseService courseService;
 
   @Autowired
-  public SchoolOperations(ConsoleManager consoleManager, Validator validator, StudentDao studentDao,
-      GroupDao groupDao, CourseDao courseDao) {
+  public SchoolOperations(ConsoleManager consoleManager, Validator validator, StudentService studentService,
+      GroupService groupService, CourseService courseService) {
     this.consoleManager = consoleManager;
     this.validator = validator;
-    this.studentDao = studentDao;
-    this.groupDao = groupDao;
-    this.courseDao = courseDao;
+    this.studentService = studentService;
+    this.groupService = groupService;
+    this.courseService = courseService;
   }
 
   public void findGroupsWithLessOrEqualStudent() {
@@ -42,7 +42,7 @@ public class SchoolOperations {
       validator.validateNumber(maxStudents);
 
       List<Group> groupsWithLessOrEqualsStudents =
-          groupDao.findGroupsWithLessOrEqualStudent(maxStudents);
+          groupService.findGroupsWithLessOrEqualStudent(maxStudents);
 
       if (groupsWithLessOrEqualsStudents.isEmpty()) {
         consoleManager.print("There are no groups with " + maxStudents + " or fewer students.");
@@ -62,14 +62,14 @@ public class SchoolOperations {
     consoleManager.print("Enter the course name.");
     String courseName = consoleManager.readLine();
 
-    Optional<Course> courseId = courseDao.getCourseIdByName(courseName);
+    Optional<Course> courseId = courseService.getCourseIdByName(courseName);
 
     if (!courseId.isPresent()) {
       consoleManager.print("Course with the name '" + courseName + "' does not exist.");
       return;
     }
 
-    List<Student> enrolledStudents = studentDao.findStudentsByCourseName(
+    List<Student> enrolledStudents = studentService.findStudentsByCourseName(
         courseName);
 
     if (enrolledStudents.isEmpty()) {
@@ -116,7 +116,7 @@ public class SchoolOperations {
           .withGroupId(groupId)
           .build();
 
-      studentDao.save(newStudent);
+      studentService.addStudent(newStudent);
       consoleManager.print("New student added.");
 
     } catch (ValidationException e) {
@@ -133,7 +133,7 @@ public class SchoolOperations {
 
       validator.validateNumber(studentId);
 
-      if (studentDao.deleteById(studentId)) {
+      if (studentService.deleteStudent(studentId)) {
         consoleManager.print(
             "Student with ID " + studentId + " has been successfully deleted.");
       } else {
@@ -153,12 +153,12 @@ public class SchoolOperations {
 
       validator.validateNumber(studentId);
 
-      if (!studentDao.findById(studentId).isPresent()) {
+      if (!studentService.getStudentById(studentId).isPresent()) {
         consoleManager.print("Student with ID " + studentId + " does not exist.");
         return;
       }
 
-      List<Course> enrolledCourses = courseDao.getEnrolledCoursesForStudent(studentId);
+      List<Course> enrolledCourses = courseService.getEnrolledCoursesForStudent(studentId);
       validator.validateEnrolledCourses(enrolledCourses, studentId);
 
       StringBuilder result = new StringBuilder(
@@ -177,13 +177,13 @@ public class SchoolOperations {
 
       int courseId = courseOptional.map(Course::getId).orElse(-1);
 
-      if (courseDao.checkStudentEnrolledInCourse(studentId, courseId)) {
+      if (courseService.checkStudentEnrolledInCourse(studentId, courseId)) {
         consoleManager.print(
             "Student with ID " + studentId + " is already enrolled in this course.");
         return;
       }
 
-      courseDao.enrollStudentToCourse(studentId, courseId);
+      courseService.enrollStudentToCourse(studentId, courseId);
       consoleManager.print("Student successfully added to the course.");
 
     } catch (ValidationException e) {
@@ -199,12 +199,12 @@ public class SchoolOperations {
 
       validator.validateNumber(studentId);
 
-      if (!studentDao.findById(studentId).isPresent()) {
+      if (!studentService.getStudentById(studentId).isPresent()) {
         consoleManager.print("Student with ID " + studentId + " does not exist.");
         return;
       }
 
-      List<Course> enrolledCourses = courseDao.getEnrolledCoursesForStudent(studentId);
+      List<Course> enrolledCourses = courseService.getEnrolledCoursesForStudent(studentId);
       validator.validateEnrolledCourses(enrolledCourses, studentId);
 
       StringBuilder result = new StringBuilder(
@@ -223,13 +223,13 @@ public class SchoolOperations {
 
       int courseId = courseOptional.map(Course::getId).orElse(-1);
 
-      if (!courseDao.checkStudentEnrolledInCourse(studentId, courseId)) {
+      if (!courseService.checkStudentEnrolledInCourse(studentId, courseId)) {
         consoleManager.print(
             "Student with ID " + studentId + " is not enrolled in the " + courseName + " course");
         return;
       }
 
-      courseDao.removeStudentFromCourse(studentId, courseId);
+      courseService.removeStudentFromCourse(studentId, courseId);
       consoleManager.print("Student successfully removed from the course.");
 
     } catch (ValidationException e) {
@@ -243,7 +243,7 @@ public class SchoolOperations {
   }
 
   private Optional<Course> getCourseByName(String courseName) {
-    Optional<Course> courseOptional = courseDao.getCourseIdByName(courseName);
+    Optional<Course> courseOptional = courseService.getCourseIdByName(courseName);
     if (!courseOptional.isPresent()) {
       consoleManager.print("Course with the name '" + courseName + "' does not exist.");
     }

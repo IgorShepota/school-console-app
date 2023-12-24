@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ua.foxminded.schoolconsoleapp.dao.StudentDao;
 import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
@@ -26,9 +27,8 @@ public class StudentDaoImpl implements StudentDao {
   private static final String UPDATE_STUDENT_QUERY = "UPDATE students "
       + "SET first_name = ?, last_name = ?, group_id = ? "
       + "WHERE student_id = ?;";
-  private static final String DELETE_STUDENT_BY_ID_QUERY =
-      "DELETE FROM student_courses WHERE student_id = ?;"
-          + "DELETE FROM students WHERE student_id = ?;";
+  private static final String DELETE_STUDENT_FROM_COURSES_QUERY = "DELETE FROM student_courses WHERE student_id = ?;";
+  private static final String DELETE_STUDENT_FROM_STUDENTS_QUERY = "DELETE FROM students WHERE student_id = ?;";
 
   private final JdbcTemplate jdbcTemplate;
   private final StudentMapper studentMapper;
@@ -82,8 +82,11 @@ public class StudentDaoImpl implements StudentDao {
   }
 
   @Override
+  @Transactional
   public boolean deleteById(Integer id) {
-    return jdbcTemplate.update(DELETE_STUDENT_BY_ID_QUERY, id, id) > 0;
+    int rowsAffected = jdbcTemplate.update(DELETE_STUDENT_FROM_COURSES_QUERY, id);
+    rowsAffected += jdbcTemplate.update(DELETE_STUDENT_FROM_STUDENTS_QUERY, id);
+    return rowsAffected > 0;
   }
 
 }

@@ -4,33 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ua.foxminded.schoolconsoleapp.consolemanager.ConsoleManager;
 import ua.foxminded.schoolconsoleapp.consolemenu.ConsoleMenu;
-import ua.foxminded.schoolconsoleapp.datainserter.DataInserter;
 
 @Component
 public class SchoolFrontController {
 
-  private final DataInserter dataInserter;
   private final ConsoleMenu consoleMenu;
   private final ConsoleManager consoleManager;
   private final SchoolOperations operations;
 
   @Autowired
-  public SchoolFrontController(DataInserter dataInserter, ConsoleMenu consoleMenu,
+  public SchoolFrontController(ConsoleMenu consoleMenu,
       ConsoleManager consoleManager, SchoolOperations operations) {
-    this.dataInserter = dataInserter;
     this.consoleMenu = consoleMenu;
     this.consoleManager = consoleManager;
     this.operations = operations;
-  }
-
-  public void initialize() {
-    if (!dataInserter.isDataInitialized()) {
-      dataInserter.insertGroups();
-      dataInserter.insertCourses();
-      dataInserter.insertStudents();
-      dataInserter.assignStudentsToGroups();
-      dataInserter.assignCoursesToStudents();
-    }
   }
 
   public void run() {
