@@ -24,7 +24,8 @@ public class SchoolOperations {
   private final CourseService courseService;
 
   @Autowired
-  public SchoolOperations(ConsoleManager consoleManager, Validator validator, StudentService studentService,
+  public SchoolOperations(ConsoleManager consoleManager, Validator validator,
+      StudentService studentService,
       GroupService groupService, CourseService courseService) {
     this.consoleManager = consoleManager;
     this.validator = validator;

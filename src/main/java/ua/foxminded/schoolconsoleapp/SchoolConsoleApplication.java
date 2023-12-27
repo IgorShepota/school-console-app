@@ -7,11 +7,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-public class SchoolConsoleAppApplication {
+public class SchoolConsoleApplication {
 
   public static void main(String[] args) {
     ConfigurableApplicationContext context = SpringApplication.run(
-        SchoolConsoleAppApplication.class, args);
+        SchoolConsoleApplication.class, args);
 
     SchoolFrontController frontController = context.getBean(SchoolFrontController.class);
 

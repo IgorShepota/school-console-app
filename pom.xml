@@ -87,7 +87,7 @@
           </execution>
           <execution>
             <id>default-report</id>
-            <phase>prepare-package</phase>
+            <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>
@@ -109,7 +109,7 @@
                 <limit>
                   <counter>LINE</counter>
                   <value>COVEREDRATIO</value>
-                  <minimum>0</minimum>
+                  <minimum>0.60</minimum>
                 </limit>
               </limits>
             </rule>
