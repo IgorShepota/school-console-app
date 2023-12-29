@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ua.foxminded.schoolconsoleapp.dao.StudentDao;
 import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
@@ -27,8 +26,8 @@ public class StudentDaoImpl implements StudentDao {
   private static final String UPDATE_STUDENT_QUERY = "UPDATE students "
       + "SET first_name = ?, last_name = ?, group_id = ? "
       + "WHERE student_id = ?;";
-  private static final String DELETE_STUDENT_FROM_COURSES_QUERY = "DELETE FROM student_courses WHERE student_id = ?;";
-  private static final String DELETE_STUDENT_FROM_STUDENTS_QUERY = "DELETE FROM students WHERE student_id = ?;";
+  private static final String DELETE_ALL_STUDENT_COURSES_QUERY = "DELETE FROM student_courses WHERE student_id = ?;";
+  private static final String DELETE_STUDENT_QUERY = "DELETE FROM students WHERE student_id = ?;";
 
   private final JdbcTemplate jdbcTemplate;
   private final StudentMapper studentMapper;
@@ -43,7 +42,6 @@ public class StudentDaoImpl implements StudentDao {
   public List<Student> findStudentsByCourseName(String courseName) {
     return jdbcTemplate.query(FIND_STUDENTS_BY_COURSE_NAME_QUERY, studentMapper, courseName);
   }
-
 
   @Override
   public void save(Student student) {
@@ -82,10 +80,14 @@ public class StudentDaoImpl implements StudentDao {
   }
 
   @Override
-  @Transactional
   public boolean deleteById(Integer id) {
-    int rowsAffected = jdbcTemplate.update(DELETE_STUDENT_FROM_COURSES_QUERY, id);
-    rowsAffected += jdbcTemplate.update(DELETE_STUDENT_FROM_STUDENTS_QUERY, id);
+    int rowsAffected = jdbcTemplate.update(DELETE_STUDENT_QUERY, id);
+    return rowsAffected > 0;
+  }
+
+  @Override
+  public boolean deleteAllStudentCourses(Integer id) {
+    int rowsAffected = jdbcTemplate.update(DELETE_ALL_STUDENT_COURSES_QUERY, id);
     return rowsAffected > 0;
   }
 

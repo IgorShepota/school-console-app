@@ -21,7 +21,6 @@ import ua.foxminded.schoolconsoleapp.dao.exception.DataBaseSqlRuntimeException;
 import ua.foxminded.schoolconsoleapp.dao.mappers.CourseMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 
-
 @ExtendWith(MockitoExtension.class)
 class CourseDaoImplTest extends TestBase {
 

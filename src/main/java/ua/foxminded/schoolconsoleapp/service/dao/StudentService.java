@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ua.foxminded.schoolconsoleapp.dao.StudentDao;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
 
@@ -42,8 +43,11 @@ StudentService {
     studentDao.update(student);
   }
 
+  @Transactional
   public boolean deleteStudent(Integer id) {
-    return studentDao.deleteById(id);
+    boolean allStudentCoursesDeleted = studentDao.deleteAllStudentCourses(id);
+    boolean studentDeleted = studentDao.deleteById(id);
+    return allStudentCoursesDeleted && studentDeleted;
   }
 
 }

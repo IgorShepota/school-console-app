@@ -28,10 +28,6 @@ public class Course {
     return new Builder(course);
   }
 
-  public static Course copy(Course entity, String encodepassword) {
-    return new Course(null);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {

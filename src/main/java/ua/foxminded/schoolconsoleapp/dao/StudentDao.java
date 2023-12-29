@@ -8,4 +8,6 @@ public interface StudentDao extends CrudDao<Student> {
 
   List<Student> findStudentsByCourseName(String courseName);
 
+  boolean deleteAllStudentCourses(Integer id);
+
 }

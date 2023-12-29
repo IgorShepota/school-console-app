@@ -28,10 +28,6 @@ public class Group {
     return new Builder(group);
   }
 
-  public static Group copy(Group entity, String encodepassword) {
-    return new Group(null);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {

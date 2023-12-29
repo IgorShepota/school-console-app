@@ -7,6 +7,6 @@ the application efficiently handles database interactions for various school ope
 managing groups, students, and courses, using the Spring JDBC API with PostgreSQL as the underlying
 database system.
 
-![img.png](test_coverage_schoolconsoleapp.PNG)
-![img_1.png](test_coverage_services.PNG)
-![img_2.png](test_coverage_dao.PNG)
+![test_coverage_schoolconsoleapp](test_coverage_schoolconsoleapp.PNG)
+![test_coverage_services](test_coverage_services.PNG)
+![test_coverage_dao](test_coverage_dao.PNG)

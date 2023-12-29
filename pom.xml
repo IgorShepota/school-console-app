@@ -7,8 +7,9 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.7.10</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <relativePath/>
   </parent>
+
   <groupId>ua.foxminded</groupId>
   <artifactId>school-console-app</artifactId>
   <version>0.0.1-SNAPSHOT</version>
@@ -21,8 +22,10 @@
     operations, such as managing groups, students, and courses, using the Spring JDBC API with
     PostgreSQL as the underlying database system.
   </description>
+
   <properties>
     <java.version>8</java.version>
+    <testcontainers.version>1.15.3</testcontainers.version>
     <assertj.version>3.24.2</assertj.version>
     <mockito-junit-jupiter.version>3.6.28</mockito-junit-jupiter.version>
   </properties>
@@ -49,13 +52,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>1.15.3</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.15.3</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -101,6 +104,11 @@
         </executions>
         <configuration>
           <excludes>
+            <exclude>ua/foxminded/schoolconsoleapp/dao/exception/*</exclude>
+            <exclude>ua/foxminded/schoolconsoleapp/consolemenu/*</exclude>
+            <exclude>ua/foxminded/schoolconsoleapp/consolemanager/*</exclude>
+            <exclude>ua/foxminded/schoolconsoleapp/validator/*</exclude>
+            <exclude>ua/foxminded/schoolconsoleapp/entitу/*</exclude>
           </excludes>
           <rules>
             <rule>
@@ -109,7 +117,7 @@
                 <limit>
                   <counter>LINE</counter>
                   <value>COVEREDRATIO</value>
-                  <minimum>0.60</minimum>
+                  <minimum>0.95</minimum>
                 </limit>
               </limits>
             </rule>

@@ -124,6 +124,8 @@ class StudentServiceTest {
   @Test
   void deleteStudentShouldReturnTrueIfStudentDeleted() {
     Integer studentId = 1;
+
+    when(studentDao.deleteAllStudentCourses(studentId)).thenReturn(true);
     when(studentDao.deleteById(studentId)).thenReturn(true);
 
     boolean result = studentService.deleteStudent(studentId);
@@ -134,6 +136,30 @@ class StudentServiceTest {
   @Test
   void deleteStudentShouldReturnFalseIfStudentNotDeleted() {
     Integer studentId = 999;
+
+    when(studentDao.deleteAllStudentCourses(studentId)).thenReturn(true);
+    when(studentDao.deleteById(studentId)).thenReturn(false);
+
+    boolean result = studentService.deleteStudent(studentId);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  void deleteStudentShouldReturnFalseIfOneOfOperationsIncorrect() {
+    Integer studentId = 1;
+    when(studentDao.deleteAllStudentCourses(studentId)).thenReturn(false);
+    when(studentDao.deleteById(studentId)).thenReturn(true);
+
+    boolean result = studentService.deleteStudent(studentId);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  void deleteStudentShouldReturnFalseIfBothOperationsIncorrect() {
+    Integer studentId = 1;
+    when(studentDao.deleteAllStudentCourses(studentId)).thenReturn(false);
     when(studentDao.deleteById(studentId)).thenReturn(false);
 
     boolean result = studentService.deleteStudent(studentId);

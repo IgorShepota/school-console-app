@@ -4,9 +4,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ua.foxminded.schoolconsoleapp.dao.mappers.annotation.RowMapperComponent;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 
-@Component
+@RowMapperComponent
 public class CourseMapper implements RowMapper<Course> {
 
   @Override

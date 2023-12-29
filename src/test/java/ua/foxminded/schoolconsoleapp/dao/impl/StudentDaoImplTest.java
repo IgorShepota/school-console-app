@@ -18,7 +18,7 @@ import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
 
 @ExtendWith(MockitoExtension.class)
-public class StudentDaoImplTest extends TestBase {
+class StudentDaoImplTest extends TestBase {
 
   @Test
   @Tag("database")
@@ -119,18 +119,36 @@ public class StudentDaoImplTest extends TestBase {
 
   @Test
   @Tag("database")
-  void deleteShouldWorkCorrectlyIfStudentExists() {
+  void deleteByIdShouldWorkCorrectlyIfStudentExists() {
     int studentId = 1;
+
+    studentDao.deleteAllStudentCourses(studentId);
 
     assertThat(studentDao.deleteById(studentId)).isTrue();
   }
 
   @Test
   @Tag("database")
-  void deleteShouldWorkCorrectlyIfStudentNotExists() {
+  void deleteByIdShouldWorkCorrectlyIfStudentNotExists() {
     int studentId = 200;
 
     assertThat(studentDao.deleteById(studentId)).isFalse();
+  }
+
+  @Test
+  @Tag("database")
+  void deleteAllStudentCoursesShouldWorkCorrectlyIfStudentExists() {
+    int studentId = 1;
+
+    assertThat(studentDao.deleteAllStudentCourses(studentId)).isTrue();
+  }
+
+  @Test
+  @Tag("database")
+  void deleteAllStudentCoursesShouldWorkCorrectlyIfStudentNotExists() {
+    int studentId = 200;
+
+    assertThat(studentDao.deleteAllStudentCourses(studentId)).isFalse();
   }
 
 }

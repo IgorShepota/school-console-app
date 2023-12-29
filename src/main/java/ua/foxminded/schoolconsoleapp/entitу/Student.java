@@ -40,10 +40,6 @@ public class Student {
     return new Builder(student);
   }
 
-  public static Student copy(Student entity, String encodepassword) {
-    return new Student(null);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
