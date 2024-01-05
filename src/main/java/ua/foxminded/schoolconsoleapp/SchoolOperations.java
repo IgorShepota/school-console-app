@@ -101,13 +101,13 @@ public class SchoolOperations {
         return;
       }
 
-      consoleManager.print("Insert group ID (1 to 10):");
+      consoleManager.print("Insert group ID (1 to 3):");
       int groupId = consoleManager.parseInput(consoleManager.readLine());
 
       validator.validateNumber(groupId);
 
-      if (groupId > 10) {
-        consoleManager.print("Group ID should be from 1 to 10.");
+      if (groupId > 3) {
+        consoleManager.print("Group ID should be from 1 to 3.");
         return;
       }
 

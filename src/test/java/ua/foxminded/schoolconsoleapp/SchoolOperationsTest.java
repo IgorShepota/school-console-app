@@ -198,7 +198,7 @@ class SchoolOperationsTest {
 
     verify(consoleManager).print("Inset first name.");
     verify(consoleManager).print("Insert last name.");
-    verify(consoleManager).print("Insert group ID (1 to 10):");
+    verify(consoleManager).print("Insert group ID (1 to 3):");
     verify(studentService).addStudent(newStudent);
     verify(consoleManager).print("New student added.");
   }
@@ -242,7 +242,7 @@ class SchoolOperationsTest {
 
     verify(consoleManager).print("Inset first name.");
     verify(consoleManager).print("Insert last name.");
-    verify(consoleManager).print("Insert group ID (1 to 10):");
+    verify(consoleManager).print("Insert group ID (1 to 3):");
     verify(consoleManager).print("Input is empty. Please enter a number.");
   }
 
@@ -258,8 +258,8 @@ class SchoolOperationsTest {
 
     verify(consoleManager).print("Inset first name.");
     verify(consoleManager).print("Insert last name.");
-    verify(consoleManager).print("Insert group ID (1 to 10):");
-    verify(consoleManager).print("Group ID should be from 1 to 10.");
+    verify(consoleManager).print("Insert group ID (1 to 3):");
+    verify(consoleManager).print("Group ID should be from 1 to 3.");
   }
 
   @Test
@@ -276,7 +276,7 @@ class SchoolOperationsTest {
 
     verify(consoleManager).print("Inset first name.");
     verify(consoleManager).print("Insert last name.");
-    verify(consoleManager).print("Insert group ID (1 to 10):");
+    verify(consoleManager).print("Insert group ID (1 to 3):");
     verify(consoleManager).print("Invalid input. Please enter a valid number.");
   }
 

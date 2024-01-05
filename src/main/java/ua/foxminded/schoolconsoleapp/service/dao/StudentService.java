@@ -47,7 +47,7 @@ StudentService {
   public boolean deleteStudent(Integer id) {
     boolean allStudentCoursesDeleted = studentDao.deleteAllStudentCourses(id);
     boolean studentDeleted = studentDao.deleteById(id);
-    return allStudentCoursesDeleted && studentDeleted;
+    return allStudentCoursesDeleted || studentDeleted;
   }
 
 }
