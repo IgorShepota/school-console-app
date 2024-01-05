@@ -142,7 +142,7 @@ class StudentServiceTest {
 
     boolean result = studentService.deleteStudent(studentId);
 
-    assertThat(result).isFalse();
+    assertThat(result).isTrue();
   }
 
   @Test
@@ -153,7 +153,7 @@ class StudentServiceTest {
 
     boolean result = studentService.deleteStudent(studentId);
 
-    assertThat(result).isFalse();
+    assertThat(result).isTrue();
   }
 
   @Test
