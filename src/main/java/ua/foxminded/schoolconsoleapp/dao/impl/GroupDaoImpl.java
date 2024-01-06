@@ -2,7 +2,7 @@ package ua.foxminded.schoolconsoleapp.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,6 +11,7 @@ import ua.foxminded.schoolconsoleapp.dao.mappers.GroupMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
 
 @Repository
+@RequiredArgsConstructor
 public class GroupDaoImpl implements GroupDao {
 
   private static final String ADD_GROUP_QUERY = "INSERT INTO groups(group_name) VALUES (?);";
@@ -29,12 +30,6 @@ public class GroupDaoImpl implements GroupDao {
 
   private final JdbcTemplate jdbcTemplate;
   private final GroupMapper groupMapper;
-
-  @Autowired
-  public GroupDaoImpl(JdbcTemplate jdbcTemplate, GroupMapper groupMapper) {
-    this.jdbcTemplate = jdbcTemplate;
-    this.groupMapper = groupMapper;
-  }
 
   @Override
   public List<Group> findGroupsWithLessOrEqualStudent(int maxStudents) {

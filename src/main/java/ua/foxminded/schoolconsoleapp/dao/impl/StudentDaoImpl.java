@@ -2,7 +2,7 @@ package ua.foxminded.schoolconsoleapp.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,6 +11,7 @@ import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
 
 @Repository
+@RequiredArgsConstructor
 public class StudentDaoImpl implements StudentDao {
 
   private static final String ADD_STUDENT_QUERY =
@@ -31,12 +32,6 @@ public class StudentDaoImpl implements StudentDao {
 
   private final JdbcTemplate jdbcTemplate;
   private final StudentMapper studentMapper;
-
-  @Autowired
-  public StudentDaoImpl(JdbcTemplate jdbcTemplate, StudentMapper studentMapper) {
-    this.jdbcTemplate = jdbcTemplate;
-    this.studentMapper = studentMapper;
-  }
 
   @Override
   public List<Student> findStudentsByCourseName(String courseName) {

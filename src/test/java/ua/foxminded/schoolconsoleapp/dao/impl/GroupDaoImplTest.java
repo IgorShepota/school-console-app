@@ -29,8 +29,8 @@ class GroupDaoImplTest extends TestBase {
   @Tag("database")
   void saveShouldWorkCorrectlyWhileGroupEntityIsCorrect() {
     Group group = Group.builder()
-        .withId(4)
-        .withGroupName("AA-01")
+        .id(4)
+        .groupName("AA-01")
         .build();
 
     groupDao.save(group);
@@ -84,8 +84,8 @@ class GroupDaoImplTest extends TestBase {
   @Tag("database")
   void updateShouldWorkCorrectlyIfGroupExists() {
     Group group = Group.builder()
-        .withId(1)
-        .withGroupName("AA-01")
+        .id(1)
+        .groupName("AA-01")
         .build();
 
     groupDao.update(group);

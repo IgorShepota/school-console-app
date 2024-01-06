@@ -2,7 +2,7 @@ package ua.foxminded.schoolconsoleapp;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ua.foxminded.schoolconsoleapp.consolemanager.ConsoleManager;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
@@ -15,6 +15,7 @@ import ua.foxminded.schoolconsoleapp.validator.Validator;
 import ua.foxminded.schoolconsoleapp.validator.exception.ValidationException;
 
 @Service
+@RequiredArgsConstructor
 public class SchoolOperations {
 
   private final ConsoleManager consoleManager;
@@ -22,17 +23,6 @@ public class SchoolOperations {
   private final StudentService studentService;
   private final GroupService groupService;
   private final CourseService courseService;
-
-  @Autowired
-  public SchoolOperations(ConsoleManager consoleManager, Validator validator,
-      StudentService studentService,
-      GroupService groupService, CourseService courseService) {
-    this.consoleManager = consoleManager;
-    this.validator = validator;
-    this.studentService = studentService;
-    this.groupService = groupService;
-    this.courseService = courseService;
-  }
 
   public void findGroupsWithLessOrEqualStudent() {
     consoleManager.print("Insert maximum amount of students.");
@@ -112,9 +102,9 @@ public class SchoolOperations {
       }
 
       Student newStudent = Student.builder()
-          .withFirstName(firstName)
-          .withLastName(lastName)
-          .withGroupId(groupId)
+          .firstName(firstName)
+          .lastName(lastName)
+          .groupId(groupId)
           .build();
 
       studentService.addStudent(newStudent);
@@ -160,7 +150,12 @@ public class SchoolOperations {
       }
 
       List<Course> enrolledCourses = courseService.getEnrolledCoursesForStudent(studentId);
-      validator.validateEnrolledCourses(enrolledCourses, studentId);
+
+      try {
+        validator.validateEnrolledCourses(enrolledCourses, studentId);
+      } catch (ValidationException e) {
+        System.out.println(e.getMessage());
+      }
 
       StringBuilder result = new StringBuilder(
           "Enrolled courses for student with ID " + studentId + ":\n");

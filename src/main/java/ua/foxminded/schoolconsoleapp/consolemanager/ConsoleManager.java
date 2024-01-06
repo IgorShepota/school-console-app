@@ -1,20 +1,16 @@
 package ua.foxminded.schoolconsoleapp.consolemanager;
 
 import java.util.Scanner;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ConsoleManager {
 
   private static final String ONLY_POSITIVE_DIGITS = "\\d+";
 
   private final Scanner scanner;
-
-  @Autowired
-  public ConsoleManager(Scanner scanner) {
-    this.scanner = scanner;
-  }
 
   public String readLine() {
     return scanner.nextLine();

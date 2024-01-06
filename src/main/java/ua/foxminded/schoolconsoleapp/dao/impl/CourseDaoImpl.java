@@ -2,7 +2,7 @@ package ua.foxminded.schoolconsoleapp.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,6 +13,7 @@ import ua.foxminded.schoolconsoleapp.dao.mappers.CourseMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 
 @Repository
+@RequiredArgsConstructor
 public class CourseDaoImpl implements CourseDao {
 
   private static final String ADD_COURSE_QUERY = "INSERT INTO courses(course_name) VALUES (?);";
@@ -39,12 +40,6 @@ public class CourseDaoImpl implements CourseDao {
 
   private final JdbcTemplate jdbcTemplate;
   private final CourseMapper courseMapper;
-
-  @Autowired
-  public CourseDaoImpl(JdbcTemplate jdbcTemplate, CourseMapper courseMapper) {
-    this.jdbcTemplate = jdbcTemplate;
-    this.courseMapper = courseMapper;
-  }
 
   @Override
   public boolean checkStudentEnrolledInCourse(int studentId, int courseId) {

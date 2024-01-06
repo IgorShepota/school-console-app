@@ -160,8 +160,8 @@ class CourseDaoImplTest extends TestBase {
   @Tag("database")
   void saveShouldWorkCorrectlyWhileCourseEntityIsCorrect() {
     Course course = Course.builder()
-        .withId(11)
-        .withCourseName("Algebra")
+        .id(11)
+        .courseName("Algebra")
         .build();
 
     courseDao.save(course);
@@ -229,8 +229,8 @@ class CourseDaoImplTest extends TestBase {
   @Tag("database")
   void updateShouldWorkCorrectlyIfCourseExists() {
     Course course = Course.builder()
-        .withId(1)
-        .withCourseName("Algebra")
+        .id(1)
+        .courseName("Algebra")
         .build();
 
     courseDao.update(course);

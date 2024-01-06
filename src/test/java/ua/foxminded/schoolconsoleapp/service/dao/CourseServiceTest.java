@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -54,34 +55,34 @@ class CourseServiceTest {
   @Test
   void getCourseIdByNameShouldReturnCorrectDataIfExists() {
     String courseName = "Mathematics";
-    Course mockCourse = Course.builder().withId(1).withCourseName(courseName).build();
+    Course mockCourse = Course.builder().id(1).courseName(courseName).build();
     when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(mockCourse));
 
     Optional<Course> course = courseService.getCourseIdByName(courseName);
 
-    assertThat(course).isPresent();
-    assertThat(course).contains(mockCourse);
+    assertThat(course).isPresent()
+        .contains(mockCourse);
   }
 
   @Test
   void getEnrolledCoursesForStudentShouldReturnCorrectCourses() {
     int studentId = 1;
     List<Course> mockCourses = Arrays.asList(
-        Course.builder().withId(1).withCourseName("Mathematics").build(),
-        Course.builder().withId(2).withCourseName("Physics").build()
+        Course.builder().id(1).courseName("Mathematics").build(),
+        Course.builder().id(2).courseName("Physics").build()
     );
 
     when(courseDao.getEnrolledCoursesForStudent(studentId)).thenReturn(mockCourses);
 
     List<Course> courses = courseService.getEnrolledCoursesForStudent(studentId);
 
-    assertThat(courses).hasSize(2);
-    assertThat(courses).isEqualTo(mockCourses);
+    assertThat(courses).hasSize(2)
+        .isEqualTo(mockCourses);
   }
 
   @Test
   void addCourseShouldCallDaoSaveMethodWhenAdding() {
-    Course course = Course.builder().withId(1).withCourseName("Mathematics").build();
+    Course course = Course.builder().id(1).courseName("Mathematics").build();
 
     courseService.addCourse(course);
 
@@ -91,34 +92,34 @@ class CourseServiceTest {
   @Test
   void getCourseByIdShouldReturnCorrectDataIfExists() {
     Integer courseId = 1;
-    Course mockCourse = Course.builder().withId(courseId).withCourseName("Mathematics").build();
+    Course mockCourse = Course.builder().id(courseId).courseName("Mathematics").build();
     when(courseDao.findById(courseId)).thenReturn(Optional.of(mockCourse));
 
     Optional<Course> course = courseService.getCourseById(courseId);
 
-    assertThat(course).isPresent();
-    assertThat(course).contains(mockCourse);
+    assertThat(course).isPresent()
+        .contains(mockCourse);
   }
 
   @Test
   void getAllCoursesShouldReturnAllCoursesIfExists() {
     List<Course> mockCourses = Arrays.asList(
-        Course.builder().withId(1).withCourseName("Mathematics").build(),
-        Course.builder().withId(2).withCourseName("Physics").build()
+        Course.builder().id(1).courseName("Mathematics").build(),
+        Course.builder().id(2).courseName("Physics").build()
     );
 
     when(courseDao.findAll()).thenReturn(mockCourses);
 
     List<Course> courses = courseService.getAllCourses();
 
-    assertThat(courses).hasSize(2);
-    assertThat(courses).isEqualTo(mockCourses);
+    assertThat(courses).hasSize(2)
+        .isEqualTo(mockCourses);
   }
 
   @Test
   void getAllCoursesWithPaginationShouldReturnCorrectCoursesWhenPageGiven() {
-    List<Course> mockCourses = Arrays.asList(
-        Course.builder().withId(1).withCourseName("Mathematics").build()
+    List<Course> mockCourses = Collections.singletonList(
+        Course.builder().id(1).courseName("Mathematics").build()
     );
 
     when(courseDao.findAll(1, 1)).thenReturn(mockCourses);
@@ -131,7 +132,7 @@ class CourseServiceTest {
 
   @Test
   void updateCourseShouldCallDaoUpdateMethodWhenUpdating() {
-    Course course = Course.builder().withId(1).withCourseName("Mathematics").build();
+    Course course = Course.builder().id(1).courseName("Mathematics").build();
 
     courseService.updateCourse(course);
 
