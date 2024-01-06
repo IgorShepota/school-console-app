@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -27,21 +28,21 @@ class GroupServiceTest {
   void findGroupsWithLessOrEqualStudentShouldReturnCorrectData() {
     int maxStudents = 10;
     List<Group> mockGroups = Arrays.asList(
-        Group.builder().withId(1).withGroupName("Group A").build(),
-        Group.builder().withId(2).withGroupName("Group B").build()
+        Group.builder().id(1).groupName("Group A").build(),
+        Group.builder().id(2).groupName("Group B").build()
     );
 
     when(groupDao.findGroupsWithLessOrEqualStudent(maxStudents)).thenReturn(mockGroups);
 
     List<Group> groups = groupService.findGroupsWithLessOrEqualStudent(maxStudents);
 
-    assertThat(groups).hasSize(2);
-    assertThat(groups).isEqualTo(mockGroups);
+    assertThat(groups).hasSize(2)
+        .isEqualTo(mockGroups);
   }
 
   @Test
   void addGroupShouldWorkCorrectlyIfGroupEntityCorrect() {
-    Group group = Group.builder().withId(1).withGroupName("Group A").build();
+    Group group = Group.builder().id(1).groupName("Group A").build();
 
     groupService.addGroup(group);
 
@@ -51,48 +52,48 @@ class GroupServiceTest {
   @Test
   void getGroupByIdShouldReturnGroupIfDataCorrect() {
     Integer groupId = 1;
-    Group mockGroup = Group.builder().withId(groupId).withGroupName("Group A").build();
+    Group mockGroup = Group.builder().id(groupId).groupName("Group A").build();
 
     when(groupDao.findById(groupId)).thenReturn(Optional.of(mockGroup));
 
     Optional<Group> group = groupService.getGroupById(groupId);
 
-    assertThat(group).isPresent();
-    assertThat(group).contains(mockGroup);
+    assertThat(group).isPresent()
+        .contains(mockGroup);
   }
 
   @Test
   void getAllGroupsShouldReturnAllGroupsIfGroupsExist() {
     List<Group> mockGroups = Arrays.asList(
-        Group.builder().withId(1).withGroupName("Group A").build(),
-        Group.builder().withId(2).withGroupName("Group B").build()
+        Group.builder().id(1).groupName("Group A").build(),
+        Group.builder().id(2).groupName("Group B").build()
     );
 
     when(groupDao.findAll()).thenReturn(mockGroups);
 
     List<Group> groups = groupService.getAllGroups();
 
-    assertThat(groups).hasSize(2);
-    assertThat(groups).isEqualTo(mockGroups);
+    assertThat(groups).hasSize(2).
+        isEqualTo(mockGroups);
   }
 
   @Test
   void getAllGroupsWithPaginationShouldReturnCorrectData() {
-    List<Group> mockGroups = Arrays.asList(
-        Group.builder().withId(1).withGroupName("Group A").build()
+    List<Group> mockGroups = Collections.singletonList(
+        Group.builder().id(1).groupName("Group A").build()
     );
 
     when(groupDao.findAll(1, 1)).thenReturn(mockGroups);
 
     List<Group> groups = groupService.getAllGroups(1, 1);
 
-    assertThat(groups).hasSize(1);
-    assertThat(groups).isEqualTo(mockGroups);
+    assertThat(groups).hasSize(1)
+        .isEqualTo(mockGroups);
   }
 
   @Test
   void updateGroupShouldCallDaoUpdateMethod() {
-    Group group = Group.builder().withId(1).withGroupName("Group A").build();
+    Group group = Group.builder().id(1).groupName("Group A").build();
 
     groupService.updateGroup(group);
 

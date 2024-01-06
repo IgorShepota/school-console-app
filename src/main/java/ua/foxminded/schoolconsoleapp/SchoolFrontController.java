@@ -1,24 +1,17 @@
 package ua.foxminded.schoolconsoleapp;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ua.foxminded.schoolconsoleapp.consolemanager.ConsoleManager;
 import ua.foxminded.schoolconsoleapp.consolemenu.ConsoleMenu;
 
 @Component
+@RequiredArgsConstructor
 public class SchoolFrontController {
 
   private final ConsoleMenu consoleMenu;
   private final ConsoleManager consoleManager;
   private final SchoolOperations operations;
-
-  @Autowired
-  public SchoolFrontController(ConsoleMenu consoleMenu,
-      ConsoleManager consoleManager, SchoolOperations operations) {
-    this.consoleMenu = consoleMenu;
-    this.consoleManager = consoleManager;
-    this.operations = operations;
-  }
 
   public void run() {
     boolean exit = false;

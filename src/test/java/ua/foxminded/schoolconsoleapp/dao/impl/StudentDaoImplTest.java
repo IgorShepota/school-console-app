@@ -24,8 +24,8 @@ class StudentDaoImplTest extends TestBase {
   @Tag("database")
   void findStudentsByCourseNameShouldWorkCorrectlyWhenStudentsExist() {
     List<Student> students = studentDao.findStudentsByCourseName("Mathematics");
-    assertThat(students).isNotEmpty();
-    assertThat(students).extracting("firstName").contains("Elizabeth", "Laura");
+    assertThat(students).isNotEmpty()
+        .extracting("firstName").contains("Elizabeth", "Laura");
   }
 
   @Test
@@ -39,10 +39,10 @@ class StudentDaoImplTest extends TestBase {
   @Tag("database")
   void saveShouldWorkCorrectlyIfStudentEntityCorrect() {
     Student student = Student.builder()
-        .withId(4)
-        .withGroupId(1)
-        .withFirstName("John")
-        .withLastName("Doe")
+        .id(4)
+        .groupId(1)
+        .firstName("John")
+        .lastName("Doe")
         .build();
 
     studentDao.save(student);
@@ -100,10 +100,10 @@ class StudentDaoImplTest extends TestBase {
   @Tag("database")
   void updateShouldWorkCorrectlyIfStudentExists() {
     Student student = Student.builder()
-        .withId(1)
-        .withGroupId(1)
-        .withFirstName("John")
-        .withLastName("Doe")
+        .id(1)
+        .groupId(1)
+        .firstName("John")
+        .lastName("Doe")
         .build();
 
     studentDao.update(student);

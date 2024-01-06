@@ -1,6 +1,5 @@
 package ua.foxminded.schoolconsoleapp.validator;
 
-
 import java.util.List;
 import org.springframework.stereotype.Component;
 import ua.foxminded.schoolconsoleapp.entitу.Course;

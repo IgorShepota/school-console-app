@@ -12,10 +12,10 @@ public class StudentMapper implements RowMapper<Student> {
   @Override
   public Student mapRow(ResultSet resultSet, int rowNum) throws SQLException {
     return Student.builder()
-        .withId(resultSet.getInt("student_id"))
-        .withGroupId(resultSet.getInt("group_id"))
-        .withFirstName(resultSet.getString("first_name"))
-        .withLastName(resultSet.getString("last_name"))
+        .id(resultSet.getInt("student_id"))
+        .groupId(resultSet.getInt("group_id"))
+        .firstName(resultSet.getString("first_name"))
+        .lastName(resultSet.getString("last_name"))
         .build();
   }
 

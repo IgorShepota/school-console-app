@@ -51,8 +51,8 @@ class SchoolOperationsTest {
   @Test
   void findGroupsWithLessOrEqualStudentShouldWorkCorrectlyIfInputIsPositiveNumber() {
     String userInput = "5";
-    Group group1 = Group.builder().withId(1).withGroupName("Group1").build();
-    Group group2 = Group.builder().withId(2).withGroupName("Group2").build();
+    Group group1 = Group.builder().id(1).groupName("Group1").build();
+    Group group2 = Group.builder().id(2).groupName("Group2").build();
     List<Group> mockGroups = Arrays.asList(group1, group2);
 
     when(consoleManager.readLine()).thenReturn(userInput);
@@ -105,24 +105,24 @@ class SchoolOperationsTest {
     String courseName = "Math";
 
     Course course = Course.builder()
-        .withId(1)
-        .withCourseName(courseName)
+        .id(1)
+        .courseName(courseName)
         .build();
 
     Optional<Course> courseId = Optional.of(course);
 
     Student student1 = Student.builder()
-        .withId(1)
-        .withGroupId(1)
-        .withFirstName("John")
-        .withLastName("Doe")
+        .id(1)
+        .groupId(1)
+        .firstName("John")
+        .lastName("Doe")
         .build();
 
     Student student2 = Student.builder()
-        .withId(2)
-        .withGroupId(1)
-        .withFirstName("Alice")
-        .withLastName("Smith")
+        .id(2)
+        .groupId(1)
+        .firstName("Alice")
+        .lastName("Smith")
         .build();
 
     List<Student> enrolledStudents = Lists.list(student1, student2);
@@ -160,8 +160,8 @@ class SchoolOperationsTest {
     String courseName = "Math";
 
     Course course = Course.builder()
-        .withId(1)
-        .withCourseName(courseName)
+        .id(1)
+        .courseName(courseName)
         .build();
 
     Optional<Course> courseId = Optional.of(course);
@@ -191,9 +191,9 @@ class SchoolOperationsTest {
     schoolOperations.addNewStudent();
 
     Student newStudent = Student.builder()
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     verify(consoleManager).print("Inset first name.");
@@ -331,15 +331,15 @@ class SchoolOperationsTest {
   @Test
   void enrollStudentToCourseShouldWorkCorrectlyIfStudentAndCourseExist() {
     Student student = Student.builder()
-        .withId(1)
-        .withGroupId(1)
-        .withFirstName("John")
-        .withLastName("Doe")
+        .id(1)
+        .groupId(1)
+        .firstName("John")
+        .lastName("Doe")
         .build();
 
     Course newCourse = Course.builder()
-        .withId(2)
-        .withCourseName("Math")
+        .id(2)
+        .courseName("Math")
         .build();
 
     when(consoleManager.readLine()).thenReturn(newCourse.getCourseName());
@@ -379,10 +379,10 @@ class SchoolOperationsTest {
     String nonExistentCourseName = "NonExistentCourse";
 
     Student student = Student.builder()
-        .withId(validStudentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(validStudentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     when(consoleManager.readLine()).thenReturn(nonExistentCourseName);
@@ -420,15 +420,15 @@ class SchoolOperationsTest {
     String existingCourseName = "Math";
 
     Student student = Student.builder()
-        .withId(validStudentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(validStudentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     Course course = Course.builder()
-        .withId(validCourseId)
-        .withCourseName(existingCourseName)
+        .id(validCourseId)
+        .courseName(existingCourseName)
         .build();
 
     when(consoleManager.readLine()).thenReturn(existingCourseName);
@@ -450,15 +450,15 @@ class SchoolOperationsTest {
     int studentId = 1;
 
     Student student = Student.builder()
-        .withId(studentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(studentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     List<Course> mockEnrolledCourses = Arrays.asList(
-        Course.builder().withId(1).withCourseName("Math").build(),
-        Course.builder().withId(2).withCourseName("Physics").build()
+        Course.builder().id(1).courseName("Math").build(),
+        Course.builder().id(2).courseName("Physics").build()
     );
 
     String result = "Enrolled courses for student with ID 1:\nMath\nPhysics\n";
@@ -484,15 +484,15 @@ class SchoolOperationsTest {
     String enrolledCourseName = "Math";
 
     Student student = Student.builder()
-        .withId(validStudentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(validStudentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     Course course = Course.builder()
-        .withId(validCourseId)
-        .withCourseName(enrolledCourseName)
+        .id(validCourseId)
+        .courseName(enrolledCourseName)
         .build();
 
     when(consoleManager.readLine()).thenReturn(enrolledCourseName);
@@ -547,10 +547,10 @@ class SchoolOperationsTest {
     String nonExistentCourseName = "NonExistentCourse";
 
     Student student = Student.builder()
-        .withId(validStudentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(validStudentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     when(consoleManager.readLine()).thenReturn(String.valueOf(validStudentId),
@@ -574,15 +574,15 @@ class SchoolOperationsTest {
     String courseName = "Math";
 
     Student student = Student.builder()
-        .withId(validStudentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(validStudentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     Course course = Course.builder()
-        .withId(validCourseId)
-        .withCourseName(courseName)
+        .id(validCourseId)
+        .courseName(courseName)
         .build();
 
     when(consoleManager.readLine()).thenReturn(courseName);
@@ -604,15 +604,15 @@ class SchoolOperationsTest {
     int studentId = 1;
 
     Student student = Student.builder()
-        .withId(studentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withGroupId(1)
+        .id(studentId)
+        .firstName("John")
+        .lastName("Doe")
+        .groupId(1)
         .build();
 
     List<Course> mockEnrolledCourses = Arrays.asList(
-        Course.builder().withId(1).withCourseName("Math").build(),
-        Course.builder().withId(2).withCourseName("Physics").build()
+        Course.builder().id(1).courseName("Math").build(),
+        Course.builder().id(2).courseName("Physics").build()
     );
 
     String result = "Enrolled courses for student with ID 1:\nMath\nPhysics\n";
