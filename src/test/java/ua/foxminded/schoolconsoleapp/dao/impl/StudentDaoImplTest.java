@@ -1,73 +1,67 @@
 package ua.foxminded.schoolconsoleapp.dao.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.EmptyResultDataAccessException;
-import ua.foxminded.schoolconsoleapp.dao.TestBase;
-import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
+import ua.foxminded.schoolconsoleapp.dao.DaoTestBase;
+import ua.foxminded.schoolconsoleapp.entitу.Group;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
 
-@ExtendWith(MockitoExtension.class)
-class StudentDaoImplTest extends TestBase {
+class StudentDaoImplTest extends DaoTestBase {
 
   @Test
-  @Tag("database")
   void findStudentsByCourseNameShouldWorkCorrectlyWhenStudentsExist() {
     List<Student> students = studentDao.findStudentsByCourseName("Mathematics");
-    assertThat(students).isNotEmpty()
-        .extracting("firstName").contains("Elizabeth", "Laura");
+
+    assertThat(students).isNotNull()
+        .hasSize(2);
   }
 
   @Test
-  @Tag("database")
   void findStudentsByCourseNameShouldReturnEmptyListWhenNoStudentsAssigned() {
-    List<Student> students = studentDao.findStudentsByCourseName("NonExistingCourse");
-    assertThat(students).isEmpty();
+    List<Student> students = studentDao.findStudentsByCourseName("Chemistry");
+
+    assertThat(students).isNotNull()
+        .isEmpty();
   }
 
   @Test
-  @Tag("database")
   void saveShouldWorkCorrectlyIfStudentEntityCorrect() {
+    Group group = entityManager.find(Group.class, 1);
+
     Student student = Student.builder()
-        .id(4)
-        .groupId(1)
-        .firstName("John")
-        .lastName("Doe")
+        .withOwnerGroup(group)
+        .withFirstName("John")
+        .withLastName("Doe")
         .build();
 
     studentDao.save(student);
 
     assertThat(studentDao.findById(student.getId())).isPresent()
         .hasValueSatisfying(retrieved -> {
+          assertThat(retrieved.getId()).isEqualTo(student.getId());
           assertThat(retrieved.getFirstName()).isEqualTo(student.getFirstName());
           assertThat(retrieved.getLastName()).isEqualTo(student.getLastName());
-          assertThat(retrieved.getGroupId()).isEqualTo(student.getGroupId());
+          assertThat(retrieved.getOwnerGroup()).isEqualTo(group);
         });
+  }
+
+  @Test
+  void findByIdShouldWorkCorrectlyIfStudentExists() {
+    int nonExistentId = 1;
+
+    assertThat(studentDao.findById(nonExistentId)).isPresent();
   }
 
   @Test
   void findByIdShouldReturnEmptyWhenNoStudentFound() {
     int nonExistentId = 999;
-    when(mockJdbcTemplate.queryForObject(anyString(), any(StudentMapper.class), eq(nonExistentId)))
-        .thenThrow(new EmptyResultDataAccessException(1));
 
-    Optional<Student> result = mockStudentDao.findById(nonExistentId);
-
-    assertThat(result).isEmpty();
+    assertThat(studentDao.findById(nonExistentId)).isEmpty();
   }
 
   @Test
-  @Tag("database")
   void findAllShouldWorkCorrectlyIfStudentsExist() {
     List<Student> students = studentDao.findAll();
 
@@ -75,14 +69,13 @@ class StudentDaoImplTest extends TestBase {
         .hasSize(3)
         .allSatisfy(student -> {
           assertThat(student.getId()).isNotNull();
-          assertThat(student.getGroupId()).isNotNull();
+          assertThat(student.getOwnerGroup()).isNotNull();
           assertThat(student.getFirstName()).isNotNull();
           assertThat(student.getLastName()).isNotNull();
         });
   }
 
   @Test
-  @Tag("database")
   void findAllWithPaginationShouldWorkCorrectlyIfStudentsExist() {
     List<Student> students = studentDao.findAll(1, 2);
 
@@ -90,20 +83,21 @@ class StudentDaoImplTest extends TestBase {
         .hasSize(2)
         .allSatisfy(student -> {
           assertThat(student.getId()).isNotNull();
-          assertThat(student.getGroupId()).isNotNull();
+          assertThat(student.getOwnerGroup()).isNotNull();
           assertThat(student.getFirstName()).isNotNull();
           assertThat(student.getLastName()).isNotNull();
         });
   }
 
   @Test
-  @Tag("database")
   void updateShouldWorkCorrectlyIfStudentExists() {
+    Group group = entityManager.find(Group.class, 1);
+
     Student student = Student.builder()
-        .id(1)
-        .groupId(1)
-        .firstName("John")
-        .lastName("Doe")
+        .withId(1)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withOwnerGroup(group)
         .build();
 
     studentDao.update(student);
@@ -111,24 +105,22 @@ class StudentDaoImplTest extends TestBase {
     assertThat(studentDao.findById(student.getId())).isPresent()
         .hasValueSatisfying(updatedStudent -> {
           assertThat(updatedStudent.getId()).isEqualTo(student.getId());
-          assertThat(updatedStudent.getGroupId()).isEqualTo(student.getGroupId());
+          assertThat(updatedStudent.getOwnerGroup()).isEqualTo(student.getOwnerGroup());
           assertThat(updatedStudent.getFirstName()).isEqualTo(student.getFirstName());
           assertThat(updatedStudent.getLastName()).isEqualTo(student.getLastName());
         });
   }
 
   @Test
-  @Tag("database")
   void deleteByIdShouldWorkCorrectlyIfStudentExists() {
-    int studentId = 1;
+    Student student = entityManager.find(Student.class, 1);
 
-    studentDao.deleteAllStudentCourses(studentId);
+    studentDao.deleteAllStudentCourses(student);
 
-    assertThat(studentDao.deleteById(studentId)).isTrue();
+    assertThat(studentDao.deleteById(student.getId())).isTrue();
   }
 
   @Test
-  @Tag("database")
   void deleteByIdShouldWorkCorrectlyIfStudentNotExists() {
     int studentId = 200;
 
@@ -136,19 +128,12 @@ class StudentDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void deleteAllStudentCoursesShouldWorkCorrectlyIfStudentExists() {
-    int studentId = 1;
+    Student student = entityManager.find(Student.class, 1);
 
-    assertThat(studentDao.deleteAllStudentCourses(studentId)).isTrue();
-  }
+    studentDao.deleteAllStudentCourses(student);
 
-  @Test
-  @Tag("database")
-  void deleteAllStudentCoursesShouldWorkCorrectlyIfStudentNotExists() {
-    int studentId = 200;
-
-    assertThat(studentDao.deleteAllStudentCourses(studentId)).isFalse();
+    assertThat(student.getCourses()).isEmpty();
   }
 
 }

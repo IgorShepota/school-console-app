@@ -28,8 +28,8 @@ class GroupServiceTest {
   void findGroupsWithLessOrEqualStudentShouldReturnCorrectData() {
     int maxStudents = 10;
     List<Group> mockGroups = Arrays.asList(
-        Group.builder().id(1).groupName("Group A").build(),
-        Group.builder().id(2).groupName("Group B").build()
+        Group.builder().withId(1).withGroupName("Group A").build(),
+        Group.builder().withId(2).withGroupName("Group B").build()
     );
 
     when(groupDao.findGroupsWithLessOrEqualStudent(maxStudents)).thenReturn(mockGroups);
@@ -42,7 +42,7 @@ class GroupServiceTest {
 
   @Test
   void addGroupShouldWorkCorrectlyIfGroupEntityCorrect() {
-    Group group = Group.builder().id(1).groupName("Group A").build();
+    Group group = Group.builder().withId(1).withGroupName("Group A").build();
 
     groupService.addGroup(group);
 
@@ -52,7 +52,7 @@ class GroupServiceTest {
   @Test
   void getGroupByIdShouldReturnGroupIfDataCorrect() {
     Integer groupId = 1;
-    Group mockGroup = Group.builder().id(groupId).groupName("Group A").build();
+    Group mockGroup = Group.builder().withId(groupId).withGroupName("Group A").build();
 
     when(groupDao.findById(groupId)).thenReturn(Optional.of(mockGroup));
 
@@ -65,8 +65,8 @@ class GroupServiceTest {
   @Test
   void getAllGroupsShouldReturnAllGroupsIfGroupsExist() {
     List<Group> mockGroups = Arrays.asList(
-        Group.builder().id(1).groupName("Group A").build(),
-        Group.builder().id(2).groupName("Group B").build()
+        Group.builder().withId(1).withGroupName("Group A").build(),
+        Group.builder().withId(2).withGroupName("Group B").build()
     );
 
     when(groupDao.findAll()).thenReturn(mockGroups);
@@ -80,7 +80,7 @@ class GroupServiceTest {
   @Test
   void getAllGroupsWithPaginationShouldReturnCorrectData() {
     List<Group> mockGroups = Collections.singletonList(
-        Group.builder().id(1).groupName("Group A").build()
+        Group.builder().withId(1).withGroupName("Group A").build()
     );
 
     when(groupDao.findAll(1, 1)).thenReturn(mockGroups);
@@ -93,7 +93,7 @@ class GroupServiceTest {
 
   @Test
   void updateGroupShouldCallDaoUpdateMethod() {
-    Group group = Group.builder().id(1).groupName("Group A").build();
+    Group group = Group.builder().withId(1).withGroupName("Group A").build();
 
     groupService.updateGroup(group);
 

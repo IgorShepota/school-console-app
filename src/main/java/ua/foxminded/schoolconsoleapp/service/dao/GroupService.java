@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ua.foxminded.schoolconsoleapp.dao.GroupDao;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
 
@@ -20,6 +21,7 @@ public class GroupService {
     return groupDao.findGroupsWithLessOrEqualStudent(maxStudents);
   }
 
+  @Transactional
   public void addGroup(Group group) {
     log.info("Adding new group: {}", group);
     groupDao.save(group);
@@ -40,11 +42,13 @@ public class GroupService {
     return groupDao.findAll(page, itemsPerPage);
   }
 
+  @Transactional
   public void updateGroup(Group group) {
     log.info("Updating group: {}", group);
     groupDao.update(group);
   }
 
+  @Transactional
   public boolean deleteGroup(Integer id) {
     boolean isDeleted = groupDao.deleteById(id);
     log.info("Deleting group with id {}: {}", id, isDeleted ? "success" : "failure");

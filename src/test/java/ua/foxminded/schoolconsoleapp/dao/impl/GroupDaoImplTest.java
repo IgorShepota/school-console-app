@@ -3,34 +3,27 @@ package ua.foxminded.schoolconsoleapp.dao.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import ua.foxminded.schoolconsoleapp.dao.TestBase;
+import ua.foxminded.schoolconsoleapp.dao.DaoTestBase;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
 
-@ExtendWith(MockitoExtension.class)
-class GroupDaoImplTest extends TestBase {
+class GroupDaoImplTest extends DaoTestBase {
 
   @Test
-  @Tag("database")
   void findGroupsWithLessOrEqualStudentShouldWorkCorrectlyIfGroupsExist() {
     int maxStudents = 1;
 
     List<Group> groups = groupDao.findGroupsWithLessOrEqualStudent(maxStudents);
 
     assertThat(groups).isNotEmpty()
-        .hasSize(2)
-        .allSatisfy(group -> assertThat(group.getId()).isIn(2, 3));
+        .hasSize(1)
+        .allSatisfy(group -> assertThat(group.getId()).isIn(2));
   }
 
   @Test
-  @Tag("database")
   void saveShouldWorkCorrectlyWhileGroupEntityIsCorrect() {
     Group group = Group.builder()
-        .id(4)
-        .groupName("AA-01")
+        .withGroupName("AA-01")
         .build();
 
     groupDao.save(group);
@@ -43,7 +36,6 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void findByIdShouldWorkCorrectlyIfGroupExists() {
     int groupIdToFind = 1;
 
@@ -55,10 +47,8 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void findAllShouldWorkCorrectlyIfGroupsExist() {
     List<Group> groups = groupDao.findAll();
-
     assertThat(groups).isNotEmpty()
         .hasSize(3)
         .allSatisfy(group -> {
@@ -68,7 +58,6 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void findAllWithPaginationShouldWorkCorrectlyIfGroupsExist() {
     List<Group> groups = groupDao.findAll(1, 1);
 
@@ -81,15 +70,13 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void updateShouldWorkCorrectlyIfGroupExists() {
     Group group = Group.builder()
-        .id(1)
-        .groupName("AA-01")
+        .withId(1)
+        .withGroupName("AA-01")
         .build();
 
     groupDao.update(group);
-
     assertThat(groupDao.findById(group.getId())).isPresent()
         .hasValueSatisfying(updatedGroup -> {
           assertThat(updatedGroup.getId()).isEqualTo(group.getId());
@@ -98,7 +85,6 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void deleteShouldWorkCorrectlyIfGroupExists() {
     int groupId = 3;
     groupDao.deleteById(groupId);
@@ -107,7 +93,6 @@ class GroupDaoImplTest extends TestBase {
   }
 
   @Test
-  @Tag("database")
   void deleteShouldWorkCorrectlyIfGroupNotExists() {
     int groupId = 50;
 
