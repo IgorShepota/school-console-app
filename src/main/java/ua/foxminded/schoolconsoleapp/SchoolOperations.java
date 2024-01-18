@@ -2,9 +2,11 @@ package ua.foxminded.schoolconsoleapp;
 
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ua.foxminded.schoolconsoleapp.consolemanager.ConsoleManager;
+import ua.foxminded.schoolconsoleapp.dao.exception.DataBaseSqlRuntimeException;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
@@ -101,10 +103,16 @@ public class SchoolOperations {
         return;
       }
 
+      Optional<Group> groupOptional = groupService.getGroupById(groupId);
+      if (!groupOptional.isPresent()) {
+        consoleManager.print("Group with ID " + groupId + " not found.");
+        return;
+      }
+
       Student newStudent = Student.builder()
-          .firstName(firstName)
-          .lastName(lastName)
-          .groupId(groupId)
+          .withFirstName(firstName)
+          .withLastName(lastName)
+          .withOwnerGroup(groupOptional.get())
           .build();
 
       studentService.addStudent(newStudent);
@@ -137,11 +145,9 @@ public class SchoolOperations {
   }
 
   public void enrollStudentToCourse() {
-
     try {
       consoleManager.print("Enter the student ID");
       int studentId = consoleManager.parseInput(consoleManager.readLine());
-
       validator.validateNumber(studentId);
 
       if (!studentService.getStudentById(studentId).isPresent()) {
@@ -151,48 +157,26 @@ public class SchoolOperations {
 
       List<Course> enrolledCourses = courseService.getEnrolledCoursesForStudent(studentId);
 
-      try {
-        validator.validateEnrolledCourses(enrolledCourses, studentId);
-      } catch (ValidationException e) {
-        System.out.println(e.getMessage());
-      }
-
       StringBuilder result = new StringBuilder(
           "Enrolled courses for student with ID " + studentId + ":\n");
-      enrolledCourses.forEach(
-          course -> result.append(course.getCourseName()).append("\n"));
+      enrolledCourses.forEach(course -> result.append(course.getCourseName()).append("\n"));
+      consoleManager.print(result.toString());
 
-      consoleManager.print(result.toString().replaceAll("\n", System.lineSeparator()));
+      consoleManager.print("Enter a course name");
+      String courseName = consoleManager.readLine();
 
-      String courseName = getCourseNameFromInput();
-      Optional<Course> courseOptional = getCourseByName(courseName);
+      courseService.enrollStudentToCourse(studentId, courseName);
+      consoleManager.print("Student successfully added to the course '" + courseName + "'.");
 
-      if (!courseOptional.isPresent()) {
-        return;
-      }
-
-      int courseId = courseOptional.map(Course::getId).orElse(-1);
-
-      if (courseService.checkStudentEnrolledInCourse(studentId, courseId)) {
-        consoleManager.print(
-            "Student with ID " + studentId + " is already enrolled in this course.");
-        return;
-      }
-
-      courseService.enrollStudentToCourse(studentId, courseId);
-      consoleManager.print("Student successfully added to the course.");
-
-    } catch (ValidationException e) {
+    } catch (ValidationException | EntityNotFoundException | DataBaseSqlRuntimeException e) {
       consoleManager.print(e.getMessage());
     }
   }
 
   public void removeStudentFromCourse() {
-
     try {
       consoleManager.print("Enter the student ID");
       int studentId = consoleManager.parseInput(consoleManager.readLine());
-
       validator.validateNumber(studentId);
 
       if (!studentService.getStudentById(studentId).isPresent()) {
@@ -205,45 +189,18 @@ public class SchoolOperations {
 
       StringBuilder result = new StringBuilder(
           "Enrolled courses for student with ID " + studentId + ":\n");
-      enrolledCourses.forEach(
-          course -> result.append(course.getCourseName()).append("\n"));
+      enrolledCourses.forEach(course -> result.append(course.getCourseName()).append("\n"));
+      consoleManager.print(result.toString());
 
-      consoleManager.print(result.toString().replaceAll("\n", System.lineSeparator()));
+      consoleManager.print("Enter a course name");
+      String courseName = consoleManager.readLine();
 
-      String courseName = getCourseNameFromInput();
-      Optional<Course> courseOptional = getCourseByName(courseName);
+      courseService.removeStudentFromCourse(studentId, courseName);
+      consoleManager.print("Student successfully removed from the course '" + courseName + "'.");
 
-      if (!courseOptional.isPresent()) {
-        return;
-      }
-
-      int courseId = courseOptional.map(Course::getId).orElse(-1);
-
-      if (!courseService.checkStudentEnrolledInCourse(studentId, courseId)) {
-        consoleManager.print(
-            "Student with ID " + studentId + " is not enrolled in the " + courseName + " course");
-        return;
-      }
-
-      courseService.removeStudentFromCourse(studentId, courseId);
-      consoleManager.print("Student successfully removed from the course.");
-
-    } catch (ValidationException e) {
+    } catch (ValidationException | EntityNotFoundException | DataBaseSqlRuntimeException e) {
       consoleManager.print(e.getMessage());
     }
-  }
-
-  private String getCourseNameFromInput() {
-    consoleManager.print("Enter a course name");
-    return consoleManager.readLine();
-  }
-
-  private Optional<Course> getCourseByName(String courseName) {
-    Optional<Course> courseOptional = courseService.getCourseIdByName(courseName);
-    if (!courseOptional.isPresent()) {
-      consoleManager.print("Course with the name '" + courseName + "' does not exist.");
-    }
-    return courseOptional;
   }
 
 }

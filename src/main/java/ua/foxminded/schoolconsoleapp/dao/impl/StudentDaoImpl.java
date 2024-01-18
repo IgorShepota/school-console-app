@@ -2,88 +2,74 @@ package ua.foxminded.schoolconsoleapp.dao.impl;
 
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 import ua.foxminded.schoolconsoleapp.dao.StudentDao;
-import ua.foxminded.schoolconsoleapp.dao.mappers.StudentMapper;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
 
 @Repository
-@RequiredArgsConstructor
 public class StudentDaoImpl implements StudentDao {
 
-  private static final String ADD_STUDENT_QUERY =
-      "INSERT INTO students(first_name, last_name, group_id) VALUES (?, ?, ?);";
-  private static final String FIND_BY_ID_QUERY = "SELECT * FROM students WHERE student_id = ?;";
-  private static final String FIND_ALL_QUERY = "SELECT * FROM students;";
-  private static final String FIND_ALL_WITH_PAGINATION_QUERY = "SELECT * FROM students ORDER BY student_id LIMIT ? OFFSET ?;";
-  private static final String FIND_STUDENTS_BY_COURSE_NAME_QUERY =
-      "SELECT * FROM students " +
-          "JOIN student_courses ON students.student_id = student_courses.student_id " +
-          "JOIN courses ON student_courses.course_id = courses.course_id " +
-          "WHERE courses.course_name = ?;";
-  private static final String UPDATE_STUDENT_QUERY = "UPDATE students "
-      + "SET first_name = ?, last_name = ?, group_id = ? "
-      + "WHERE student_id = ?;";
-  private static final String DELETE_ALL_STUDENT_COURSES_QUERY = "DELETE FROM student_courses WHERE student_id = ?;";
-  private static final String DELETE_STUDENT_QUERY = "DELETE FROM students WHERE student_id = ?;";
+  private static final String FIND_STUDENTS_BY_COURSE_NAME_QUERY = "SELECT s FROM Student s JOIN s.courses c Where c.courseName = :courseName";
+  private static final String FIND_ALL_STUDENTS_QUERY = "SELECT s FROM Student s";
+  private static final String DELETE_STUDENT_QUERY = "DELETE FROM Student WHERE id = :id";
 
-  private final JdbcTemplate jdbcTemplate;
-  private final StudentMapper studentMapper;
+  @PersistenceContext
+  private EntityManager entityManager;
 
   @Override
   public List<Student> findStudentsByCourseName(String courseName) {
-    return jdbcTemplate.query(FIND_STUDENTS_BY_COURSE_NAME_QUERY, studentMapper, courseName);
+    TypedQuery<Student> query = entityManager.createQuery(FIND_STUDENTS_BY_COURSE_NAME_QUERY,
+        Student.class);
+    query.setParameter("courseName", courseName);
+    return query.getResultList();
   }
 
   @Override
   public void save(Student student) {
-    Object[] params = {student.getFirstName(), student.getLastName(), student.getGroupId()};
-    jdbcTemplate.update(ADD_STUDENT_QUERY, params);
+    entityManager.persist(student);
   }
 
   @Override
   public Optional<Student> findById(Integer id) {
-    try {
-      Student student = jdbcTemplate.queryForObject(FIND_BY_ID_QUERY, studentMapper, id);
-
-      return Optional.ofNullable(student);
-
-    } catch (EmptyResultDataAccessException e) {
-      return Optional.empty();
-    }
+    Student student = entityManager.find(Student.class, id);
+    return Optional.ofNullable(student);
   }
 
   @Override
   public List<Student> findAll() {
-    return jdbcTemplate.query(FIND_ALL_QUERY, new StudentMapper());
+    return entityManager.createQuery(FIND_ALL_STUDENTS_QUERY, Student.class).getResultList();
   }
 
   @Override
   public List<Student> findAll(Integer page, Integer itemsPerPage) {
-    int offset = (page - 1) * itemsPerPage;
-    return jdbcTemplate.query(FIND_ALL_WITH_PAGINATION_QUERY, studentMapper, itemsPerPage,
-        offset);
+    TypedQuery<Student> query = entityManager.createQuery(FIND_ALL_STUDENTS_QUERY, Student.class);
+    query.setFirstResult((page - 1) * itemsPerPage);
+    query.setMaxResults(itemsPerPage);
+    return query.getResultList();
   }
 
   @Override
   public void update(Student student) {
-    jdbcTemplate.update(UPDATE_STUDENT_QUERY, student.getFirstName(), student.getLastName(),
-        student.getGroupId(), student.getId());
+    entityManager.merge(student);
   }
 
   @Override
   public boolean deleteById(Integer id) {
-    int rowsAffected = jdbcTemplate.update(DELETE_STUDENT_QUERY, id);
-    return rowsAffected > 0;
+    Query query = entityManager.createQuery(DELETE_STUDENT_QUERY);
+    query.setParameter("id", id);
+    int result = query.executeUpdate();
+
+    return result > 0;
   }
 
   @Override
-  public boolean deleteAllStudentCourses(Integer id) {
-    int rowsAffected = jdbcTemplate.update(DELETE_ALL_STUDENT_COURSES_QUERY, id);
-    return rowsAffected > 0;
+  public void deleteAllStudentCourses(Student student) {
+    student.getCourses().clear();
+    entityManager.merge(student);
   }
 
 }

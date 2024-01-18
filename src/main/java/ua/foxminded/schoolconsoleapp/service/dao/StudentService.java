@@ -21,6 +21,7 @@ public class StudentService {
     return studentDao.findStudentsByCourseName(courseName);
   }
 
+  @Transactional
   public void addStudent(Student student) {
     log.info("Adding new student: {}", student);
     studentDao.save(student);
@@ -42,6 +43,7 @@ public class StudentService {
     return studentDao.findAll(page, itemsPerPage);
   }
 
+  @Transactional
   public void updateStudent(Student student) {
     log.info("Updating student: {}", student);
     studentDao.update(student);
@@ -49,11 +51,20 @@ public class StudentService {
 
   @Transactional
   public boolean deleteStudent(Integer id) {
-    boolean allStudentCoursesDeleted = studentDao.deleteAllStudentCourses(id);
-    boolean studentDeleted = studentDao.deleteById(id);
-    boolean result = allStudentCoursesDeleted || studentDeleted;
-    log.info("Attempting to delete student with ID {}: {}", id, result ? "success" : "failure");
-    return result;
+    Optional<Student> studentOpt = studentDao.findById(id);
+    boolean studentDeleted = false;
+
+    if (studentOpt.isPresent()) {
+      Student student = studentOpt.get();
+
+      studentDao.deleteAllStudentCourses(student);
+      studentDeleted = studentDao.deleteById(id);
+    }
+
+    log.info("Attempting to delete student with ID {}: {}", id,
+        studentDeleted ? "success" : "failure");
+
+    return studentDeleted;
   }
 
 }

@@ -1,9 +1,12 @@
 package ua.foxminded.schoolconsoleapp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -51,8 +55,8 @@ class SchoolOperationsTest {
   @Test
   void findGroupsWithLessOrEqualStudentShouldWorkCorrectlyIfInputIsPositiveNumber() {
     String userInput = "5";
-    Group group1 = Group.builder().id(1).groupName("Group1").build();
-    Group group2 = Group.builder().id(2).groupName("Group2").build();
+    Group group1 = Group.builder().withId(1).withGroupName("Group1").build();
+    Group group2 = Group.builder().withId(2).withGroupName("Group2").build();
     List<Group> mockGroups = Arrays.asList(group1, group2);
 
     when(consoleManager.readLine()).thenReturn(userInput);
@@ -105,24 +109,22 @@ class SchoolOperationsTest {
     String courseName = "Math";
 
     Course course = Course.builder()
-        .id(1)
-        .courseName(courseName)
+        .withId(1)
+        .withCourseName(courseName)
         .build();
 
     Optional<Course> courseId = Optional.of(course);
 
     Student student1 = Student.builder()
-        .id(1)
-        .groupId(1)
-        .firstName("John")
-        .lastName("Doe")
+        .withId(1)
+        .withFirstName("John")
+        .withLastName("Doe")
         .build();
 
     Student student2 = Student.builder()
-        .id(2)
-        .groupId(1)
-        .firstName("Alice")
-        .lastName("Smith")
+        .withId(2)
+        .withFirstName("Alice")
+        .withLastName("Smith")
         .build();
 
     List<Student> enrolledStudents = Lists.list(student1, student2);
@@ -160,8 +162,8 @@ class SchoolOperationsTest {
     String courseName = "Math";
 
     Course course = Course.builder()
-        .id(1)
-        .courseName(courseName)
+        .withId(1)
+        .withCourseName(courseName)
         .build();
 
     Optional<Course> courseId = Optional.of(course);
@@ -186,20 +188,29 @@ class SchoolOperationsTest {
         .thenReturn("John")
         .thenReturn("Doe")
         .thenReturn("1");
+
     when(consoleManager.parseInput("1")).thenReturn(1);
+
+    Group group = Group.builder()
+        .withId(1)
+        .withGroupName("Group1")
+        .build();
+
+    when(groupService.getGroupById(1)).thenReturn(Optional.of(group));
 
     schoolOperations.addNewStudent();
 
-    Student newStudent = Student.builder()
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
+    ArgumentCaptor<Student> studentCaptor = ArgumentCaptor.forClass(Student.class);
+    verify(studentService).addStudent(studentCaptor.capture());
+    Student capturedStudent = studentCaptor.getValue();
+
+    assertThat(capturedStudent.getFirstName()).isEqualTo("John");
+    assertThat(capturedStudent.getLastName()).isEqualTo("Doe");
+    assertThat(capturedStudent.getOwnerGroup()).isEqualTo(group);
 
     verify(consoleManager).print("Inset first name.");
     verify(consoleManager).print("Insert last name.");
     verify(consoleManager).print("Insert group ID (1 to 3):");
-    verify(studentService).addStudent(newStudent);
     verify(consoleManager).print("New student added.");
   }
 
@@ -281,6 +292,26 @@ class SchoolOperationsTest {
   }
 
   @Test
+  void addNewStudentShouldNotAddIfGroupNotFound() {
+    when(consoleManager.readLine())
+        .thenReturn("John")
+        .thenReturn("Doe")
+        .thenReturn("3");
+    when(consoleManager.parseInput("3")).thenReturn(3);
+
+    when(groupService.getGroupById(3)).thenReturn(Optional.empty());
+
+    schoolOperations.addNewStudent();
+
+    verify(consoleManager).print("Inset first name.");
+    verify(consoleManager).print("Insert last name.");
+    verify(consoleManager).print("Insert group ID (1 to 3):");
+    verify(consoleManager).print("Group with ID 3 not found.");
+
+    verify(studentService, never()).addStudent(any(Student.class));
+  }
+
+  @Test
   void deleteStudentShouldWorkCorrectlyIfStudentExists() {
     int studentId = 45;
     when(consoleManager.readLine())
@@ -330,16 +361,19 @@ class SchoolOperationsTest {
 
   @Test
   void enrollStudentToCourseShouldWorkCorrectlyIfStudentAndCourseExist() {
+    int studentId = 1;
+    String courseName = "Math";
+
     Student student = Student.builder()
-        .id(1)
-        .groupId(1)
-        .firstName("John")
-        .lastName("Doe")
+        .withId(studentId)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withOwnerGroup(Group.builder().withId(1).withGroupName("Group1").build())
         .build();
 
     Course newCourse = Course.builder()
-        .id(2)
-        .courseName("Math")
+        .withId(2)
+        .withCourseName(courseName)
         .build();
 
     when(consoleManager.readLine()).thenReturn(newCourse.getCourseName());
@@ -354,8 +388,7 @@ class SchoolOperationsTest {
 
     schoolOperations.enrollStudentToCourse();
 
-    verify(courseService).enrollStudentToCourse(student.getId(), newCourse.getId());
-    verify(consoleManager).print("Student successfully added to the course.");
+    verify(consoleManager).print("Student successfully added to the course 'Math'.");
   }
 
   @Test
@@ -371,30 +404,6 @@ class SchoolOperationsTest {
 
     verify(consoleManager).print("Enter the student ID");
     verify(consoleManager).print("Invalid input. Please enter a valid number.");
-  }
-
-  @Test
-  void enrollStudentToCourseShouldNotEnrollIfCourseDoesNotExist() {
-    int validStudentId = 1;
-    String nonExistentCourseName = "NonExistentCourse";
-
-    Student student = Student.builder()
-        .id(validStudentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    when(consoleManager.readLine()).thenReturn(nonExistentCourseName);
-    when(consoleManager.parseInput(anyString())).thenReturn(validStudentId);
-    when(studentService.getStudentById(validStudentId)).thenReturn(Optional.of(student));
-    when(courseService.getCourseIdByName(nonExistentCourseName)).thenReturn(Optional.empty());
-
-    schoolOperations.enrollStudentToCourse();
-
-    verify(courseService, never()).enrollStudentToCourse(anyInt(), anyInt());
-    verify(consoleManager).print(
-        "Course with the name '" + nonExistentCourseName + "' does not exist.");
   }
 
   @Test
@@ -414,98 +423,57 @@ class SchoolOperationsTest {
   }
 
   @Test
-  void enrollStudentToCourseShouldNotEnrollIfStudentIsAlreadyEnrolled() {
-    int validStudentId = 1;
-    int validCourseId = 2;
-    String existingCourseName = "Math";
-
-    Student student = Student.builder()
-        .id(validStudentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    Course course = Course.builder()
-        .id(validCourseId)
-        .courseName(existingCourseName)
-        .build();
-
-    when(consoleManager.readLine()).thenReturn(existingCourseName);
-    when(consoleManager.parseInput(anyString())).thenReturn(validStudentId);
-    when(studentService.getStudentById(validStudentId)).thenReturn(Optional.of(student));
-    when(courseService.getCourseIdByName(existingCourseName)).thenReturn(Optional.of(course));
-    when(courseService.checkStudentEnrolledInCourse(validStudentId, validCourseId)).thenReturn(
-        true);
-
-    schoolOperations.enrollStudentToCourse();
-
-    verify(courseService, never()).enrollStudentToCourse(validStudentId, validCourseId);
-    verify(consoleManager).print(
-        "Student with ID " + validStudentId + " is already enrolled in this course.");
-  }
-
-  @Test
-  void enrollStudentToCourseShouldPrintEnrolledCoursesCorrectlyIfDataCorrect() {
-    int studentId = 1;
-
-    Student student = Student.builder()
-        .id(studentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    List<Course> mockEnrolledCourses = Arrays.asList(
-        Course.builder().id(1).courseName("Math").build(),
-        Course.builder().id(2).courseName("Physics").build()
+  void enrollStudentToCourseShouldDisplayEnrolledCoursesCorrectly() {
+    int existingStudentId = 1;
+    List<Course> enrolledCourses = Arrays.asList(
+        Course.builder().withId(1).withCourseName("Mathematics").build(),
+        Course.builder().withId(2).withCourseName("Physics").build()
     );
+    String expectedCoursesList = "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
 
-    String result = "Enrolled courses for student with ID 1:\nMath\nPhysics\n";
-
-    when(consoleManager.readLine()).thenReturn("1");
-    when(consoleManager.parseInput("1")).thenReturn(studentId);
-    when(studentService.getStudentById(studentId)).thenReturn(
-        Optional.of(student));
-    when(courseService.getEnrolledCoursesForStudent(studentId)).thenReturn(
-        mockEnrolledCourses);
+    when(consoleManager.readLine()).thenReturn(String.valueOf(existingStudentId), "NewCourse");
+    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(existingStudentId);
+    when(studentService.getStudentById(existingStudentId)).thenReturn(Optional.of(new Student()));
+    when(courseService.getEnrolledCoursesForStudent(existingStudentId)).thenReturn(enrolledCourses);
 
     schoolOperations.enrollStudentToCourse();
 
     verify(consoleManager).print("Enter the student ID");
-    verify(courseService).getEnrolledCoursesForStudent(studentId);
-    verify(consoleManager).print(result.replaceAll("\n", System.lineSeparator()));
+    verify(consoleManager, times(2)).readLine();
+    verify(consoleManager).parseInput(String.valueOf(existingStudentId));
+    verify(studentService).getStudentById(existingStudentId);
+    verify(consoleManager).print(expectedCoursesList);
+
+    verify(consoleManager).print("Enter a course name");
+    verify(courseService).enrollStudentToCourse(existingStudentId, "NewCourse");
+    verify(consoleManager).print("Student successfully added to the course 'NewCourse'.");
   }
 
   @Test
-  void removeStudentFromCourseShouldRemoveStudentIfEnrolled() {
-    int validStudentId = 1;
-    int validCourseId = 2;
-    String enrolledCourseName = "Math";
+  void removeStudentFromCourseShouldSucceedWithValidStudentIdAndCourseName() {
+    int existingStudentId = 1;
+    String existingCourseName = "Mathematics";
+    List<Course> enrolledCourses = Arrays.asList(
+        Course.builder().withId(1).withCourseName("Mathematics").build(),
+        Course.builder().withId(2).withCourseName("Physics").build()
+    );
+    String expectedCoursesList = "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
 
-    Student student = Student.builder()
-        .id(validStudentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    Course course = Course.builder()
-        .id(validCourseId)
-        .courseName(enrolledCourseName)
-        .build();
-
-    when(consoleManager.readLine()).thenReturn(enrolledCourseName);
-    when(consoleManager.parseInput(anyString())).thenReturn(validStudentId);
-    when(studentService.getStudentById(validStudentId)).thenReturn(Optional.of(student));
-    when(courseService.getCourseIdByName(enrolledCourseName)).thenReturn(Optional.of(course));
-    when(courseService.checkStudentEnrolledInCourse(validStudentId, validCourseId)).thenReturn(
-        true);
+    when(consoleManager.readLine()).thenReturn(String.valueOf(existingStudentId), existingCourseName);
+    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(existingStudentId);
+    when(studentService.getStudentById(existingStudentId)).thenReturn(Optional.of(new Student()));
+    when(courseService.getEnrolledCoursesForStudent(existingStudentId)).thenReturn(enrolledCourses);
 
     schoolOperations.removeStudentFromCourse();
 
-    verify(courseService).removeStudentFromCourse(validStudentId, validCourseId);
-    verify(consoleManager).print("Student successfully removed from the course.");
+    verify(consoleManager).print("Enter the student ID");
+    verify(consoleManager, times(2)).readLine();
+    verify(consoleManager).parseInput(String.valueOf(existingStudentId));
+    verify(studentService).getStudentById(existingStudentId);
+    verify(consoleManager).print(expectedCoursesList);
+    verify(consoleManager).print("Enter a course name");
+    verify(courseService).removeStudentFromCourse(existingStudentId, existingCourseName);
+    verify(consoleManager).print("Student successfully removed from the course '" + existingCourseName + "'.");
   }
 
   @Test
@@ -520,115 +488,29 @@ class SchoolOperationsTest {
 
     schoolOperations.removeStudentFromCourse();
 
-    verify(courseService, never()).removeStudentFromCourse(anyInt(), anyInt());
+    verify(courseService, never()).removeStudentFromCourse(anyInt(), anyString());
     verify(consoleManager).print("Invalid input. Please enter a valid number.");
   }
 
-
   @Test
-  void removeStudentFromCourseShouldWarnIfStudentDoesNotExist() {
-    int nonExistentStudentId = 500;
-    String courseName = "Math";
+  void removeStudentFromCourseShouldNotProceedIfStudentNotFound() {
+    int nonExistentStudentId = 999;
+    String courseName = "Mathematics";
 
-    when(consoleManager.readLine()).thenReturn(courseName);
-    when(consoleManager.parseInput(anyString())).thenReturn(nonExistentStudentId);
+    when(consoleManager.readLine()).thenReturn(String.valueOf(nonExistentStudentId));
+    when(consoleManager.parseInput(String.valueOf(nonExistentStudentId))).thenReturn(nonExistentStudentId);
     when(studentService.getStudentById(nonExistentStudentId)).thenReturn(Optional.empty());
 
     schoolOperations.removeStudentFromCourse();
 
-    verify(courseService, never()).removeStudentFromCourse(anyInt(), anyInt());
-    verify(consoleManager).print("Student with ID " + nonExistentStudentId
-        + " does not exist.");
-  }
-
-  @Test
-  void removeStudentFromCourseShouldNotRemoveIfCourseDoesNotExist() {
-    int validStudentId = 1;
-    String nonExistentCourseName = "NonExistentCourse";
-
-    Student student = Student.builder()
-        .id(validStudentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    when(consoleManager.readLine()).thenReturn(String.valueOf(validStudentId),
-        nonExistentCourseName);
-    when(consoleManager.parseInput(String.valueOf(validStudentId))).thenReturn(validStudentId);
-    when(studentService.getStudentById(validStudentId)).thenReturn(Optional.of(student));
-
-    when(courseService.getCourseIdByName(nonExistentCourseName)).thenReturn(Optional.empty());
-
-    schoolOperations.removeStudentFromCourse();
-
-    verify(courseService, never()).removeStudentFromCourse(anyInt(), anyInt());
-    verify(consoleManager).print(
-        "Course with the name '" + nonExistentCourseName + "' does not exist.");
-  }
-
-  @Test
-  void removeStudentFromCourseShouldExitIfStudentNotEnrolled() {
-    int validStudentId = 1;
-    int validCourseId = 2;
-    String courseName = "Math";
-
-    Student student = Student.builder()
-        .id(validStudentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    Course course = Course.builder()
-        .id(validCourseId)
-        .courseName(courseName)
-        .build();
-
-    when(consoleManager.readLine()).thenReturn(courseName);
-    when(consoleManager.parseInput(anyString())).thenReturn(validStudentId);
-    when(studentService.getStudentById(validStudentId)).thenReturn(Optional.of(student));
-    when(courseService.getCourseIdByName(courseName)).thenReturn(Optional.of(course));
-    when(courseService.checkStudentEnrolledInCourse(validStudentId, validCourseId)).thenReturn(
-        false);
-
-    schoolOperations.removeStudentFromCourse();
-
-    verify(courseService, never()).removeStudentFromCourse(anyInt(), anyInt());
-    verify(consoleManager).print(
-        "Student with ID " + validStudentId + " is not enrolled in the " + courseName + " course");
-  }
-
-  @Test
-  void removeStudentFromCourseShouldPrintEnrolledCoursesCorrectlyIfDataCorrect() {
-    int studentId = 1;
-
-    Student student = Student.builder()
-        .id(studentId)
-        .firstName("John")
-        .lastName("Doe")
-        .groupId(1)
-        .build();
-
-    List<Course> mockEnrolledCourses = Arrays.asList(
-        Course.builder().id(1).courseName("Math").build(),
-        Course.builder().id(2).courseName("Physics").build()
-    );
-
-    String result = "Enrolled courses for student with ID 1:\nMath\nPhysics\n";
-
-    when(consoleManager.readLine()).thenReturn("1");
-    when(consoleManager.parseInput("1")).thenReturn(studentId);
-    when(studentService.getStudentById(studentId)).thenReturn(
-        Optional.of(student));
-    when(courseService.getEnrolledCoursesForStudent(studentId)).thenReturn(
-        mockEnrolledCourses);
-
-    schoolOperations.removeStudentFromCourse();
-
     verify(consoleManager).print("Enter the student ID");
-    verify(courseService).getEnrolledCoursesForStudent(studentId);
-    verify(consoleManager).print(result.replaceAll("\n", System.lineSeparator()));
+    verify(consoleManager).readLine();
+    verify(studentService).getStudentById(nonExistentStudentId);
+    verify(consoleManager).print("Student with ID " + nonExistentStudentId + " does not exist.");
+
+    verify(consoleManager, never()).print("Enter a course name");
+    verify(courseService, never()).removeStudentFromCourse(nonExistentStudentId, courseName);
+    verify(consoleManager, never()).print("Student successfully removed from the course '" + courseName + "'.");
   }
 
 }
