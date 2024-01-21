@@ -1,26 +1,26 @@
-package ua.foxminded.schoolconsoleapp.dao;
+package ua.foxminded.schoolconsoleapp.repository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import ua.foxminded.schoolconsoleapp.entitу.Student;
 
-@DataJpaTest(includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
-    StudentDao.class, GroupDao.class, CourseDao.class}))
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @Sql(scripts = {"classpath:db/sql/test_tables.sql",
     "classpath:db/sql/test_data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Testcontainers
-public abstract class DaoTestBase {
+class StudentRepositoryTest {
 
   @Container
   protected static final PostgreSQLContainer<?> postgresqlContainer =
@@ -29,16 +29,16 @@ public abstract class DaoTestBase {
           .withUsername("root")
           .withPassword("test");
 
-  @PersistenceContext
-  protected EntityManager entityManager;
-
   @Autowired
-  protected StudentDao studentDao;
+  private StudentRepository studentRepository;
 
-  @Autowired
-  protected GroupDao groupDao;
+  @Test
+  void testFindStudentsByCourseNameShouldWorCorrectlyIfStudentsExist() {
+    List<Student> students = studentRepository.findStudentsByCourseName("Mathematics");
 
-  @Autowired
-  protected CourseDao courseDao;
+    assertThat(students).hasSize(2);
+    assertThat(students).extracting(Student::getFirstName)
+        .containsExactlyInAnyOrder("Elizabeth", "Laura");
+  }
 
 }

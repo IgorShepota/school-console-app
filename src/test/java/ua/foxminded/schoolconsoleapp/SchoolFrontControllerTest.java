@@ -32,6 +32,7 @@ class SchoolFrontControllerTest {
     when(consoleManager.readLine()).thenReturn("1", "2", "3", "4", "5", "6", "invalid", "exit");
 
     controller.run();
+
     verify(operations).findGroupsWithLessOrEqualStudent();
     verify(operations).findStudentsByGroupName();
     verify(operations).addNewStudent();

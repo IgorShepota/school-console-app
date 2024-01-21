@@ -368,7 +368,8 @@ class SchoolOperationsTest {
         .withId(studentId)
         .withFirstName("John")
         .withLastName("Doe")
-        .withOwnerGroup(Group.builder().withId(1).withGroupName("Group1").build())
+        .withOwnerGroup(
+            Group.builder().withId(1).withGroupName("Group1").build())
         .build();
 
     Course newCourse = Course.builder()
@@ -429,10 +430,12 @@ class SchoolOperationsTest {
         Course.builder().withId(1).withCourseName("Mathematics").build(),
         Course.builder().withId(2).withCourseName("Physics").build()
     );
-    String expectedCoursesList = "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
+    String expectedCoursesList =
+        "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
 
     when(consoleManager.readLine()).thenReturn(String.valueOf(existingStudentId), "NewCourse");
-    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(existingStudentId);
+    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(
+        existingStudentId);
     when(studentService.getStudentById(existingStudentId)).thenReturn(Optional.of(new Student()));
     when(courseService.getEnrolledCoursesForStudent(existingStudentId)).thenReturn(enrolledCourses);
 
@@ -457,10 +460,13 @@ class SchoolOperationsTest {
         Course.builder().withId(1).withCourseName("Mathematics").build(),
         Course.builder().withId(2).withCourseName("Physics").build()
     );
-    String expectedCoursesList = "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
+    String expectedCoursesList =
+        "Enrolled courses for student with ID " + existingStudentId + ":\nMathematics\nPhysics\n";
 
-    when(consoleManager.readLine()).thenReturn(String.valueOf(existingStudentId), existingCourseName);
-    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(existingStudentId);
+    when(consoleManager.readLine()).thenReturn(String.valueOf(existingStudentId),
+        existingCourseName);
+    when(consoleManager.parseInput(String.valueOf(existingStudentId))).thenReturn(
+        existingStudentId);
     when(studentService.getStudentById(existingStudentId)).thenReturn(Optional.of(new Student()));
     when(courseService.getEnrolledCoursesForStudent(existingStudentId)).thenReturn(enrolledCourses);
 
@@ -473,7 +479,8 @@ class SchoolOperationsTest {
     verify(consoleManager).print(expectedCoursesList);
     verify(consoleManager).print("Enter a course name");
     verify(courseService).removeStudentFromCourse(existingStudentId, existingCourseName);
-    verify(consoleManager).print("Student successfully removed from the course '" + existingCourseName + "'.");
+    verify(consoleManager).print(
+        "Student successfully removed from the course '" + existingCourseName + "'.");
   }
 
   @Test
@@ -498,7 +505,8 @@ class SchoolOperationsTest {
     String courseName = "Mathematics";
 
     when(consoleManager.readLine()).thenReturn(String.valueOf(nonExistentStudentId));
-    when(consoleManager.parseInput(String.valueOf(nonExistentStudentId))).thenReturn(nonExistentStudentId);
+    when(consoleManager.parseInput(String.valueOf(nonExistentStudentId))).thenReturn(
+        nonExistentStudentId);
     when(studentService.getStudentById(nonExistentStudentId)).thenReturn(Optional.empty());
 
     schoolOperations.removeStudentFromCourse();
@@ -510,7 +518,8 @@ class SchoolOperationsTest {
 
     verify(consoleManager, never()).print("Enter a course name");
     verify(courseService, never()).removeStudentFromCourse(nonExistentStudentId, courseName);
-    verify(consoleManager, never()).print("Student successfully removed from the course '" + courseName + "'.");
+    verify(consoleManager, never()).print(
+        "Student successfully removed from the course '" + courseName + "'.");
   }
 
 }

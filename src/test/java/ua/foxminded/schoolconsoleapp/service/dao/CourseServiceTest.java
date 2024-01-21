@@ -1,8 +1,8 @@
 package ua.foxminded.schoolconsoleapp.service.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,23 +15,28 @@ import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import ua.foxminded.schoolconsoleapp.dao.CourseDao;
-import ua.foxminded.schoolconsoleapp.dao.StudentDao;
-import ua.foxminded.schoolconsoleapp.dao.exception.DataBaseSqlRuntimeException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
+import ua.foxminded.schoolconsoleapp.repository.CourseRepository;
+import ua.foxminded.schoolconsoleapp.repository.StudentRepository;
+import ua.foxminded.schoolconsoleapp.repository.exception.DataBaseSqlRuntimeException;
 
 @SpringBootTest
 class CourseServiceTest {
 
   @MockBean
-  private CourseDao courseDao;
+  private CourseRepository courseRepository;
 
   @MockBean
-  private StudentDao studentDao;
+  private StudentRepository studentRepository;
 
   @Autowired
   private CourseService courseService;
@@ -39,11 +44,21 @@ class CourseServiceTest {
   @Test
   void checkStudentEnrolledInCourseShouldReturnTrueIfEnrolled() {
     int studentId = 1, courseId = 1;
-    when(courseDao.checkStudentEnrolledInCourse(studentId, courseId)).thenReturn(true);
+    when(courseRepository.checkStudentEnrolledInCourse(studentId, courseId)).thenReturn(1L);
 
     boolean enrolled = courseService.checkStudentEnrolledInCourse(studentId, courseId);
 
     assertThat(enrolled).isTrue();
+  }
+
+  @Test
+  void checkStudentEnrolledInCourseShouldReturnFalseIfNotEnrolled() {
+    int studentId = 1, courseId = 1;
+    when(courseRepository.checkStudentEnrolledInCourse(studentId, courseId)).thenReturn(0L);
+
+    boolean enrolled = courseService.checkStudentEnrolledInCourse(studentId, courseId);
+
+    assertThat(enrolled).isFalse();
   }
 
   @Test
@@ -64,31 +79,40 @@ class CourseServiceTest {
         .withStudents(new ArrayList<>())
         .build();
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(course));
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
 
     courseService.enrollStudentToCourse(studentId, courseName);
 
-    verify(courseDao).enrollStudentToCourse(student, course);
+    ArgumentCaptor<Student> studentCaptor = forClass(Student.class);
+    ArgumentCaptor<Course> courseCaptor = forClass(Course.class);
+
+    verify(studentRepository).save(studentCaptor.capture());
+    verify(courseRepository).save(courseCaptor.capture());
+
+    Student savedStudent = studentCaptor.getValue();
+    Course savedCourse = courseCaptor.getValue();
+
+    assertThat(savedStudent.getCourses()).contains(course);
+    assertThat(savedCourse.getStudents()).contains(student);
   }
 
   @Test
-  void enrollStudentToCourseShouldThrowEntityNotFoundExceptionWhenInvalidStudentId() {
-    int studentId = 10;
-    String courseName = "Math";
+  void enrollStudentToCourseShouldThrowExceptionWhenStudentNotFound() {
+    int studentId = 1;
+    String courseName = "Mathematics";
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.empty());
+    when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> courseService.enrollStudentToCourse(studentId, courseName))
-        .isInstanceOf(EntityNotFoundException.class);
-
-    verify(courseDao, never()).enrollStudentToCourse(any(), any());
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessageContaining("Student with ID " + studentId + " does not exist.");
   }
 
   @Test
-  void enrollStudentToCourseShouldThrowDataBaseSqlRuntimeExceptionWhenInvalidCourseName() {
+  void enrollStudentToCourseShouldThrowExceptionWhenCourseNotFound() {
     int studentId = 1;
-    String courseName = "Mathe";
+    String courseName = "Mathematics";
 
     Student student = Student.builder()
         .withId(studentId)
@@ -97,13 +121,12 @@ class CourseServiceTest {
         .withCourses(new ArrayList<>())
         .build();
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.empty());
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> courseService.enrollStudentToCourse(studentId, courseName))
-        .isInstanceOf(DataBaseSqlRuntimeException.class);
-
-    verify(courseDao, never()).enrollStudentToCourse(any(), any());
+        .isInstanceOf(DataBaseSqlRuntimeException.class)
+        .hasMessageContaining("Course with the name '" + courseName + "' does not exist.");
   }
 
   @Test
@@ -111,95 +134,124 @@ class CourseServiceTest {
     int studentId = 1;
     String courseName = "Mathematics";
 
+    Student student = Student.builder()
+        .withId(studentId)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withCourses(new ArrayList<>())
+        .build();
+
     Course course = Course.builder()
         .withId(1)
         .withCourseName(courseName)
+        .withStudents(new ArrayList<>())
         .build();
 
-    Student student = Student.builder()
-        .withId(studentId)
-        .withCourses(Collections.singletonList(course))
-        .build();
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
+    when(courseRepository.checkStudentEnrolledInCourse(studentId, course.getId())).thenReturn(1L);
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(course));
-
-    assertThatExceptionOfType(DataBaseSqlRuntimeException.class)
-        .isThrownBy(() -> courseService.enrollStudentToCourse(studentId, courseName))
-        .withMessage(
+    assertThatThrownBy(() -> courseService.enrollStudentToCourse(studentId, courseName))
+        .isInstanceOf(DataBaseSqlRuntimeException.class)
+        .hasMessageContaining(
             "Student with ID " + studentId + " is already enrolled in the course '" + courseName
                 + "'.");
   }
 
   @Test
-  void removeStudentFromCourseShouldSucceedWithValidStudentIdAndCourseName() {
+  void removeStudentFromCourseShouldWorkCorrectly() {
     int studentId = 1;
     String courseName = "Mathematics";
+
+    Student student = Student.builder()
+        .withId(studentId)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withCourses(new ArrayList<>())
+        .build();
 
     Course course = Course.builder()
         .withId(1)
         .withCourseName(courseName)
+        .withStudents(new ArrayList<>())
         .build();
 
-    Student student = Student.builder()
-        .withId(studentId)
-        .withCourses(Collections.singletonList(course))
-        .build();
+    student.getCourses().add(course);
+    course.getStudents().add(student);
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(course));
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
+    when(courseRepository.checkStudentEnrolledInCourse(studentId, course.getId())).thenReturn(1L);
 
     courseService.removeStudentFromCourse(studentId, courseName);
 
-    verify(courseDao).removeStudentFromCourse(student, course);
+    ArgumentCaptor<Student> studentCaptor = ArgumentCaptor.forClass(Student.class);
+    ArgumentCaptor<Course> courseCaptor = ArgumentCaptor.forClass(Course.class);
+
+    verify(studentRepository).save(studentCaptor.capture());
+    verify(courseRepository).save(courseCaptor.capture());
+
+    Student updatedStudent = studentCaptor.getValue();
+    Course updatedCourse = courseCaptor.getValue();
+
+    assertThat(updatedStudent.getCourses()).doesNotContain(course);
+    assertThat(updatedCourse.getStudents()).doesNotContain(student);
   }
 
   @Test
-  void removeStudentFromCourseShouldThrowEntityNotFoundExceptionForInvalidStudentId() {
-    int studentId = 1;
-    String courseName = "Math";
-
-    when(studentDao.findById(studentId)).thenReturn(Optional.empty());
-
-    assertThatThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
-        .isInstanceOf(EntityNotFoundException.class);
-  }
-
-  @Test
-  void removeStudentFromCourseShouldThrowDataBaseSqlRuntimeExceptionForInvalidCourseName() {
-    int studentId = 1;
-    String courseName = "Math";
-
-    Student student = Student.builder().withId(studentId).build();
-
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.empty());
-
-    assertThatThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
-        .isInstanceOf(DataBaseSqlRuntimeException.class);
-  }
-
-  @Test
-  void removeStudentFromCourseShouldThrowExceptionWhenStudentAlreadyNotEnrolled() {
+  void removeStudentFromCourseShouldThrowExceptionWhenStudentNotFound() {
     int studentId = 1;
     String courseName = "Mathematics";
 
+    when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessageContaining("Student with ID " + studentId + " does not exist.");
+  }
+
+  @Test
+  void removeStudentFromCourseShouldThrowExceptionWhenCourseNotFound() {
+    int studentId = 1;
+    String courseName = "Mathematics";
+    Student student = Student.builder()
+        .withId(studentId)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withCourses(new ArrayList<>())
+        .build();
+
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
+        .isInstanceOf(DataBaseSqlRuntimeException.class)
+        .hasMessageContaining("Course with the name '" + courseName + "' does not exist.");
+  }
+
+  @Test
+  void removeStudentFromCourseShouldThrowExceptionWhenStudentNotEnrolled() {
+    int studentId = 1;
+    String courseName = "Mathematics";
+    Student student = Student.builder()
+        .withId(studentId)
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withCourses(new ArrayList<>())
+        .build();
     Course course = Course.builder()
         .withId(1)
         .withCourseName(courseName)
+        .withStudents(new ArrayList<>())
         .build();
 
-    Student student = Student.builder()
-        .withId(studentId)
-        .withCourses(Collections.emptyList())
-        .build();
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
+    when(courseRepository.checkStudentEnrolledInCourse(studentId, course.getId())).thenReturn(0L);
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(course));
-
-    assertThatExceptionOfType(DataBaseSqlRuntimeException.class)
-        .isThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
-        .withMessage(
+    assertThatThrownBy(() -> courseService.removeStudentFromCourse(studentId, courseName))
+        .isInstanceOf(DataBaseSqlRuntimeException.class)
+        .hasMessageContaining(
             "Student with ID " + studentId + " is not enrolled in the course '" + courseName
                 + "'.");
   }
@@ -208,7 +260,7 @@ class CourseServiceTest {
   void getCourseIdByNameShouldReturnCorrectDataIfExists() {
     String courseName = "Mathematics";
     Course mockCourse = Course.builder().withId(1).withCourseName(courseName).build();
-    when(courseDao.getCourseIdByName(courseName)).thenReturn(Optional.of(mockCourse));
+    when(courseRepository.findByCourseName(courseName)).thenReturn(Optional.of(mockCourse));
 
     Optional<Course> course = courseService.getCourseIdByName(courseName);
 
@@ -224,7 +276,7 @@ class CourseServiceTest {
         Course.builder().withId(2).withCourseName("Physics").build()
     );
 
-    when(courseDao.getEnrolledCoursesForStudent(studentId)).thenReturn(mockCourses);
+    when(courseRepository.getEnrolledCoursesForStudent(studentId)).thenReturn(mockCourses);
 
     List<Course> courses = courseService.getEnrolledCoursesForStudent(studentId);
 
@@ -238,14 +290,14 @@ class CourseServiceTest {
 
     courseService.addCourse(course);
 
-    verify(courseDao).save(course);
+    verify(courseRepository).save(course);
   }
 
   @Test
   void getCourseByIdShouldReturnCorrectDataIfExists() {
     Integer courseId = 1;
     Course mockCourse = Course.builder().withId(courseId).withCourseName("Mathematics").build();
-    when(courseDao.findById(courseId)).thenReturn(Optional.of(mockCourse));
+    when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
 
     Optional<Course> course = courseService.getCourseById(courseId);
 
@@ -260,7 +312,7 @@ class CourseServiceTest {
         Course.builder().withId(2).withCourseName("Physics").build()
     );
 
-    when(courseDao.findAll()).thenReturn(mockCourses);
+    when(courseRepository.findAll()).thenReturn(mockCourses);
 
     List<Course> courses = courseService.getAllCourses();
 
@@ -273,13 +325,15 @@ class CourseServiceTest {
     List<Course> mockCourses = Collections.singletonList(
         Course.builder().withId(1).withCourseName("Mathematics").build()
     );
+    Page<Course> pageOfCourses = new PageImpl<>(mockCourses);
 
-    when(courseDao.findAll(1, 1)).thenReturn(mockCourses);
+    when(courseRepository.findAll(any(Pageable.class))).thenReturn(pageOfCourses);
 
     List<Course> courses = courseService.getAllCourses(1, 1);
 
-    assertThat(courses).hasSize(1).
-        isEqualTo(mockCourses);
+    assertThat(courses).hasSize(1)
+        .isEqualTo(mockCourses);
+    verify(courseRepository).findAll(PageRequest.of(0, 1));
   }
 
   @Test
@@ -288,27 +342,31 @@ class CourseServiceTest {
 
     courseService.updateCourse(course);
 
-    verify(courseDao).update(course);
+    verify(courseRepository).save(course);
   }
 
   @Test
-  void deleteCourseShouldReturnTrueIfCourseDeleted() {
+  void deleteCourseShouldReturnTrueWhenCourseExists() {
     Integer courseId = 1;
-    when(courseDao.deleteById(courseId)).thenReturn(true);
+
+    when(courseRepository.existsById(courseId)).thenReturn(true);
 
     boolean result = courseService.deleteCourse(courseId);
 
     assertThat(result).isTrue();
+    verify(courseRepository).deleteById(courseId);
   }
 
   @Test
-  void deleteCourseShouldReturnFalseIfCourseNotDeleted() {
-    Integer courseId = 999;
-    when(courseDao.deleteById(courseId)).thenReturn(false);
+  void deleteCourseShouldReturnFalseWhenCourseDoesNotExist() {
+    Integer courseId = 1;
+
+    when(courseRepository.existsById(courseId)).thenReturn(false);
 
     boolean result = courseService.deleteCourse(courseId);
 
     assertThat(result).isFalse();
+    verify(courseRepository, never()).deleteById(courseId);
   }
 
 }
