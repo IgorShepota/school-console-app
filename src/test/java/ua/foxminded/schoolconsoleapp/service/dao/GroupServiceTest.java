@@ -1,6 +1,8 @@
 package ua.foxminded.schoolconsoleapp.service.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,14 +14,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import ua.foxminded.schoolconsoleapp.dao.GroupDao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import ua.foxminded.schoolconsoleapp.entitу.Group;
+import ua.foxminded.schoolconsoleapp.repository.GroupRepository;
 
 @SpringBootTest
 class GroupServiceTest {
 
   @MockBean
-  private GroupDao groupDao;
+  private GroupRepository groupRepository;
 
   @Autowired
   private GroupService groupService;
@@ -32,7 +38,7 @@ class GroupServiceTest {
         Group.builder().withId(2).withGroupName("Group B").build()
     );
 
-    when(groupDao.findGroupsWithLessOrEqualStudent(maxStudents)).thenReturn(mockGroups);
+    when(groupRepository.findGroupsWithLessOrEqualStudent(maxStudents)).thenReturn(mockGroups);
 
     List<Group> groups = groupService.findGroupsWithLessOrEqualStudent(maxStudents);
 
@@ -46,7 +52,7 @@ class GroupServiceTest {
 
     groupService.addGroup(group);
 
-    verify(groupDao).save(group);
+    verify(groupRepository).save(group);
   }
 
   @Test
@@ -54,7 +60,7 @@ class GroupServiceTest {
     Integer groupId = 1;
     Group mockGroup = Group.builder().withId(groupId).withGroupName("Group A").build();
 
-    when(groupDao.findById(groupId)).thenReturn(Optional.of(mockGroup));
+    when(groupRepository.findById(groupId)).thenReturn(Optional.of(mockGroup));
 
     Optional<Group> group = groupService.getGroupById(groupId);
 
@@ -69,7 +75,7 @@ class GroupServiceTest {
         Group.builder().withId(2).withGroupName("Group B").build()
     );
 
-    when(groupDao.findAll()).thenReturn(mockGroups);
+    when(groupRepository.findAll()).thenReturn(mockGroups);
 
     List<Group> groups = groupService.getAllGroups();
 
@@ -79,16 +85,21 @@ class GroupServiceTest {
 
   @Test
   void getAllGroupsWithPaginationShouldReturnCorrectData() {
-    List<Group> mockGroups = Collections.singletonList(
-        Group.builder().withId(1).withGroupName("Group A").build()
-    );
+    Group groupA = Group.builder()
+        .withId(1)
+        .withGroupName("Group A")
+        .build();
 
-    when(groupDao.findAll(1, 1)).thenReturn(mockGroups);
+    List<Group> mockGroups = Collections.singletonList(groupA);
+    Page<Group> groupPage = new PageImpl<>(mockGroups);
+
+    when(groupRepository.findAll(any(Pageable.class))).thenReturn(groupPage);
 
     List<Group> groups = groupService.getAllGroups(1, 1);
 
-    assertThat(groups).hasSize(1)
-        .isEqualTo(mockGroups);
+    assertThat(groups).hasSize(1).containsExactly(groupA);
+
+    verify(groupRepository).findAll(PageRequest.of(0, 1));
   }
 
   @Test
@@ -97,27 +108,29 @@ class GroupServiceTest {
 
     groupService.updateGroup(group);
 
-    verify(groupDao).update(group);
+    verify(groupRepository).save(group);
   }
 
   @Test
-  void deleteGroupShouldReturnTrueIfGroupDeleted() {
+  void deleteGroupShouldReturnTrueWhenGroupExists() {
     Integer groupId = 1;
-    when(groupDao.deleteById(groupId)).thenReturn(true);
+    when(groupRepository.existsById(groupId)).thenReturn(true);
 
     boolean result = groupService.deleteGroup(groupId);
-
     assertThat(result).isTrue();
+
+    verify(groupRepository).deleteById(groupId);
   }
 
   @Test
-  void deleteGroupShouldReturnFalseIfGroupNotDeleted() {
-    Integer groupId = 999;
-    when(groupDao.deleteById(groupId)).thenReturn(false);
+  void deleteGroupShouldReturnFalseWhenGroupDoesNotExist() {
+    Integer groupId = 1;
+    when(groupRepository.existsById(groupId)).thenReturn(false);
 
     boolean result = groupService.deleteGroup(groupId);
-
     assertThat(result).isFalse();
+
+    verify(groupRepository, never()).deleteById(groupId);
   }
 
 }

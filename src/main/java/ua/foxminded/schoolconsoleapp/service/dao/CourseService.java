@@ -5,127 +5,135 @@ import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.foxminded.schoolconsoleapp.dao.CourseDao;
-import ua.foxminded.schoolconsoleapp.dao.StudentDao;
-import ua.foxminded.schoolconsoleapp.dao.exception.DataBaseSqlRuntimeException;
 import ua.foxminded.schoolconsoleapp.entitу.Course;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
+import ua.foxminded.schoolconsoleapp.repository.CourseRepository;
+import ua.foxminded.schoolconsoleapp.repository.StudentRepository;
+import ua.foxminded.schoolconsoleapp.repository.exception.DataBaseSqlRuntimeException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CourseService {
 
-  private final CourseDao courseDao;
-  private final StudentDao studentDao;
+  private final CourseRepository courseRepository;
+  private final StudentRepository studentRepository;
 
   public boolean checkStudentEnrolledInCourse(int studentId, int courseId) {
-    boolean enrolled = courseDao.checkStudentEnrolledInCourse(studentId, courseId);
+    Long enrolled = courseRepository.checkStudentEnrolledInCourse(studentId, courseId);
     log.info("Checked if student with ID {} is enrolled in course with ID {}: {}", studentId,
-        courseId, enrolled);
-    return enrolled;
+        courseId, enrolled == 1);
+    return enrolled == 1;
   }
 
   @Transactional
   public void enrollStudentToCourse(int studentId, String courseName) {
-    Optional<Student> studentOpt = studentDao.findById(studentId);
-    Optional<Course> courseOpt = courseDao.getCourseIdByName(courseName);
+    Student student = studentRepository.findById(studentId)
+        .orElseThrow(
+            () -> new EntityNotFoundException(
+                "Student with ID " + studentId
+                    + " does not exist."));
 
-    if (!studentOpt.isPresent()) {
-      throw new EntityNotFoundException("Student with ID " + studentId + " does not exist.");
-    }
+    Course course = courseRepository.findByCourseName(courseName)
+        .orElseThrow(() -> new DataBaseSqlRuntimeException(
+            "Course with the name '" + courseName
+                + "' does not exist."));
 
-    if (!courseOpt.isPresent()) {
-      throw new DataBaseSqlRuntimeException(
-          "Course with the name '" + courseName + "' does not exist.");
-    }
-
-    Student student = studentOpt.get();
-    Course course = courseOpt.get();
-
-    if (student.getCourses().contains(course)) {
+    if (courseRepository.checkStudentEnrolledInCourse(studentId, course.getId()) == 1) {
       throw new DataBaseSqlRuntimeException(
           "Student with ID " + studentId + " is already enrolled in the course '" + courseName
               + "'.");
     }
 
-    courseDao.enrollStudentToCourse(student, course);
+    student.getCourses().add(course);
+    course.getStudents().add(student);
+
+    studentRepository.save(student);
+    courseRepository.save(course);
 
     log.info("Enrolled student with ID {} to course '{}'", studentId, courseName);
   }
 
   @Transactional
   public void removeStudentFromCourse(int studentId, String courseName) {
-    Optional<Student> studentOpt = studentDao.findById(studentId);
-    Optional<Course> courseOpt = courseDao.getCourseIdByName(courseName);
+    Student student = studentRepository.findById(studentId)
+        .orElseThrow(
+            () -> new EntityNotFoundException(
+                "Student with ID " + studentId
+                    + " does not exist."));
 
-    if (!studentOpt.isPresent()) {
-      throw new EntityNotFoundException("Student with ID " + studentId + " does not exist.");
-    }
+    Course course = courseRepository.findByCourseName(courseName)
+        .orElseThrow(() -> new DataBaseSqlRuntimeException(
+            "Course with the name '" + courseName
+                + "' does not exist."));
 
-    if (!courseOpt.isPresent()) {
-      throw new DataBaseSqlRuntimeException(
-          "Course with the name '" + courseName + "' does not exist.");
-    }
-
-    Student student = studentOpt.get();
-    Course course = courseOpt.get();
-
-    if (!student.getCourses().contains(course)) {
+    if (courseRepository.checkStudentEnrolledInCourse(studentId, course.getId()) == 0) {
       throw new DataBaseSqlRuntimeException(
           "Student with ID " + studentId + " is not enrolled in the course '" + courseName + "'.");
     }
 
-    courseDao.removeStudentFromCourse(student, course);
+    student.getCourses().remove(course);
+    course.getStudents().remove(student);
+
+    studentRepository.save(student);
+    courseRepository.save(course);
 
     log.info("Removed student with ID {} from course '{}'", studentId, courseName);
   }
 
   public Optional<Course> getCourseIdByName(String courseName) {
     log.info("Retrieving course ID by name: {}", courseName);
-    return courseDao.getCourseIdByName(courseName);
+    return courseRepository.findByCourseName(courseName);
   }
 
   public List<Course> getEnrolledCoursesForStudent(int studentId) {
     log.info("Retrieving courses for student with ID {}", studentId);
-    return courseDao.getEnrolledCoursesForStudent(studentId);
+    return courseRepository.getEnrolledCoursesForStudent(studentId);
   }
 
   @Transactional
   public void addCourse(Course course) {
     log.info("Adding new course: {}", course);
-    courseDao.save(course);
+    courseRepository.save(course);
   }
 
   public Optional<Course> getCourseById(Integer id) {
     log.info("Retrieving course by ID: {}", id);
-    return courseDao.findById(id);
+    return courseRepository.findById(id);
   }
 
   public List<Course> getAllCourses() {
     log.info("Retrieving all courses");
-    return courseDao.findAll();
+    return courseRepository.findAll();
   }
 
   public List<Course> getAllCourses(Integer page, Integer itemsPerPage) {
     log.info("Retrieving all courses with pagination: page {}, itemsPerPage {}", page,
         itemsPerPage);
-    return courseDao.findAll(page, itemsPerPage);
+    Pageable pageable = Pageable.ofSize(itemsPerPage).withPage(page - 1);
+
+    return courseRepository.findAll(pageable).getContent();
   }
 
   @Transactional
   public void updateCourse(Course course) {
     log.info("Updating course: {}", course);
-    courseDao.update(course);
+    courseRepository.save(course);
   }
 
   @Transactional
   public boolean deleteCourse(Integer id) {
-    boolean isDeleted = courseDao.deleteById(id);
-    log.info("Deleting course with ID {}: {}", id, isDeleted ? "success" : "failure");
-    return isDeleted;
+    if (courseRepository.existsById(id)) {
+      courseRepository.deleteById(id);
+      log.info("Course with id {} was successfully deleted.", id);
+      return true;
+    } else {
+      log.info("Course with id {} not found.", id);
+      return false;
+    }
   }
 
 }

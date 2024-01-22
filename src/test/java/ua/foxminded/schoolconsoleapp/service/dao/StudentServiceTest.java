@@ -1,25 +1,30 @@
 package ua.foxminded.schoolconsoleapp.service.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import ua.foxminded.schoolconsoleapp.dao.StudentDao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import ua.foxminded.schoolconsoleapp.entitу.Student;
+import ua.foxminded.schoolconsoleapp.repository.StudentRepository;
 
 @SpringBootTest
 class StudentServiceTest {
 
   @MockBean
-  private StudentDao studentDao;
+  private StudentRepository studentRepository;
 
   @Autowired
   private StudentService studentService;
@@ -32,7 +37,7 @@ class StudentServiceTest {
         Student.builder().withId(2).withFirstName("Jane").withLastName("Smith").build()
     );
 
-    when(studentDao.findStudentsByCourseName(courseName)).thenReturn(mockStudents);
+    when(studentRepository.findStudentsByCourseName(courseName)).thenReturn(mockStudents);
 
     List<Student> students = studentService.findStudentsByCourseName(courseName);
 
@@ -50,7 +55,7 @@ class StudentServiceTest {
 
     studentService.addStudent(mockStudent);
 
-    verify(studentDao).save(mockStudent);
+    verify(studentRepository).save(mockStudent);
   }
 
   @Test
@@ -62,7 +67,7 @@ class StudentServiceTest {
         .withLastName("Doe")
         .build();
 
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(mockStudent));
+    when(studentRepository.findById(studentId)).thenReturn(Optional.of(mockStudent));
 
     Optional<Student> result = studentService.getStudentById(studentId);
 
@@ -73,7 +78,7 @@ class StudentServiceTest {
   @Test
   void getStudentByIdShouldReturnEmptyIfStudentDoesNotExist() {
     Integer nonExistentId = 999;
-    when(studentDao.findById(nonExistentId)).thenReturn(Optional.empty());
+    when(studentRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
     Optional<Student> result = studentService.getStudentById(nonExistentId);
 
@@ -87,7 +92,7 @@ class StudentServiceTest {
         Student.builder().withId(2).withFirstName("Jane").withLastName("Smith").build()
     );
 
-    when(studentDao.findAll()).thenReturn(mockStudents);
+    when(studentRepository.findAll()).thenReturn(mockStudents);
 
     List<Student> students = studentService.getAllStudents();
 
@@ -97,16 +102,28 @@ class StudentServiceTest {
 
   @Test
   void getAllStudentsWithPaginationShouldReturnCorrectData() {
-    List<Student> mockStudents = Collections.singletonList(
-        Student.builder().withId(1).withFirstName("John").withLastName("Doe").build()
-    );
+    Student elizabeth = Student.builder()
+        .withId(1)
+        .withFirstName("Elizabeth")
+        .withLastName("Harris")
+        .build();
+    Student laura = Student.builder()
+        .withId(2)
+        .withFirstName("Laura")
+        .withLastName("Taylor")
+        .build();
 
-    when(studentDao.findAll(1, 1)).thenReturn(mockStudents);
+    List<Student> students = Arrays.asList(elizabeth, laura);
+    Page<Student> studentPage = new PageImpl<>(students);
 
-    List<Student> students = studentService.getAllStudents(1, 1);
+    when(studentRepository.findAll(any(Pageable.class))).thenReturn(studentPage);
 
-    assertThat(students).hasSize(1)
-        .isEqualTo(mockStudents);
+    List<Student> returnedStudents = studentService.getAllStudents(1, 2);
+
+    assertThat(returnedStudents).hasSize(2)
+        .containsExactlyInAnyOrder(elizabeth, laura);
+
+    verify(studentRepository).findAll(PageRequest.of(0, 2, Sort.by("id")));
   }
 
   @Test
@@ -119,41 +136,28 @@ class StudentServiceTest {
 
     studentService.updateStudent(student);
 
-    verify(studentDao).update(student);
+    verify(studentRepository).save(student);
   }
 
   @Test
-  void deleteStudentdWorkCorrectlyIfStudentExists() {
+  void deleteStudentWorkCorrectlyIfStudentExists() {
     int studentId = 1;
     boolean expectedResult = true;
 
-    Student student = Student.builder()
-        .withId(studentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .build();
-
-    when(studentDao.findById(studentId)).thenReturn(Optional.of(student));
-    when(studentDao.deleteById(studentId)).thenReturn(expectedResult);
+    when(studentRepository.existsById(studentId)).thenReturn(true);
 
     boolean result = studentService.deleteStudent(studentId);
 
     assertThat(result).isEqualTo(expectedResult);
+    verify(studentRepository).deleteById(studentId);
   }
 
   @Test
-  void deleteStudentdWorkCorrectlyIfStudentNotExists() {
+  void deleteStudentWorkCorrectlyIfStudentNotExists() {
     int studentId = 1;
     boolean expectedResult = false;
 
-    Student student = Student.builder()
-        .withId(studentId)
-        .withFirstName("John")
-        .withLastName("Doe")
-        .build();
-
-    when(studentDao.findById(studentId)).thenReturn(Optional.empty());
-    when(studentDao.deleteById(studentId)).thenReturn(expectedResult);
+    when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
 
     boolean result = studentService.deleteStudent(studentId);
 
